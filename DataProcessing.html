@@ -192,7 +192,7 @@
           <ul>
           <li><a href="#for-whom-is-this-guide"><span class="toc-section-number">1.1</span> For whom is this guide?</a></li>
           <li><a href="#getting-started-with-r"><span class="toc-section-number">1.2</span> Getting started with R</a></li>
-          <li><a href="#tidy-data-principles"><span class="toc-section-number">1.3</span> Tidy Data Principles</a></li>
+          <li><a href="#tidy-data-principles"><span class="toc-section-number">1.3</span> Tidy data principles</a></li>
           </ul></li>
           <li><a href="#description-of-the-dummy-data"><span class="toc-section-number">2</span> Description of the Dummy Data</a></li>
           <li><a href="#setting-up"><span class="toc-section-number">3</span> Setting Up</a>
@@ -217,9 +217,9 @@
           <li><a href="#identifying-new-cases-within-the-laboratory-linelist"><span class="toc-section-number">4.2</span> Identifying new cases within the laboratory linelist</a>
           <ul>
           <li><a href="#filtering-positive-results"><span class="toc-section-number">4.2.1</span> Filtering positive results</a></li>
-          <li><a href="#setting-up-the-deduplication-pairs"><span class="toc-section-number">4.2.2</span> Setting up the deduplication pairs</a></li>
+          <li><a href="#creating-a-data-frame-of-id-variable-pairs-1"><span class="toc-section-number">4.2.2</span> Creating a data frame of ID variable pairs</a></li>
           <li><a href="#add-names-and-other-information-for-deduplication-and-adjudication"><span class="toc-section-number">4.2.3</span> Add names and other information for deduplication and adjudication</a></li>
-          <li><a href="#generate-similariity-scores"><span class="toc-section-number">4.2.4</span> Generate similariity scores</a></li>
+          <li><a href="#generate-similarity-scores"><span class="toc-section-number">4.2.4</span> Generate similarity scores</a></li>
           <li><a href="#manually-selecting-duplicates-1"><span class="toc-section-number">4.2.5</span> Manually selecting duplicates</a></li>
           </ul></li>
           </ul></li>
@@ -243,6 +243,7 @@
           <ul>
           <li><a href="#putting-the-processed-tibbles-altogether"><span class="toc-section-number">7.1</span> Putting the processed tibbles altogether</a></li>
           <li><a href="#checking-date-consistencies"><span class="toc-section-number">7.2</span> Checking date consistencies</a></li>
+          <li><a href="#export-to-micrsoft-excel"><span class="toc-section-number">7.3</span> Export to Micrsoft Excel</a></li>
           </ul></li>
           </ul>
         </nav>
@@ -271,7 +272,7 @@
    
 <!-- Don't indent these lines or it will mess pre blocks indentation --> 
 <p><br></p>
-<p>This guide aims to provide step-by-step instructions on how to conduct common data processing tasks for infectious disease surveillance using the open-source programming language R and the integrated development environment (IDE) for R.</p>
+<p>This guide aims to provide step-by-step instructions on how to conduct common data processing tasks for infectious disease surveillance using the open-source programming language R and the integrated development environment (IDE) for R, RStudio.</p>
 <p><br></p>
 <div id="the-basics" class="section level1" number="1">
 <h1 number="1"><span class="header-section-number">1</span> The Basics</h1>
@@ -289,26 +290,26 @@
 <ul>
 <li>We need to first install <a href="https://cran.r-project.org/bin/windows/base/">R</a> and <a href="https://www.rstudio.com/products/rstudio/download/#download">RStudio</a>. Both are free and open source tools. We must install R first, then RStudio. <a href="https://techvidvan.com/tutorials/install-r/">TechVidVan has provided a great starter guide on installing R and RStudio</a>.</li>
 <li>Most of R’s capabilities come in the form of <strong>PACKAGES</strong>. Packages are created by a vibrant community of R programmers, many of whom are epidemiologists. <a href="https://www.datacamp.com/community/tutorials/r-packages-guide">DataCamp has an FAQ guide on what R packages are</a>.</li>
-<li>Open RStudio for the first time may be overwhelming. <a href="https://statsandr.com/blog/how-to-install-r-and-rstudio/#the-main-components-of-rstudio">Antoine Soetewey’s Stats and R blog has a beginner-level introduction to the RStudio interface</a>.</li>
+<li>Open RStudio for the first time may are overwhelming. <a href="https://statsandr.com/blog/how-to-install-r-and-rstudio/#the-main-components-of-rstudio">Antoine Soetewey’s Stats and R blog has a beginner-level introduction to the RStudio interface</a>.</li>
 <li><a href="https://hbctraining.github.io/Intro-to-R-flipped/schedules/links-to-lessons.html">Finally, Harvard Chan Bioinformatic Core (HBC) has an excellent 1.5 day tutorial on the basics of R</a></li>
 <li>There are also excellent Coursera courses from Johns Hopkins University on getting familiar with R: <a href="https://www.coursera.org/learn/r-programming">R Programming</a> and <a href="https://www.coursera.org/learn/tidyverse/">Introduction to Tidyverse</a>.</li>
 </ul>
 </div>
 <div id="tidy-data-principles" class="section level2" number="1.3">
-<h2 number="1.3"><span class="header-section-number">1.3</span> Tidy Data Principles</h2>
-<p>Often, the data we have as part of epidemiologic surveillance may not be the version ready for any type of statistical analysis. This raw data MUST be processed into tidy data. At the basic level:</p>
+<h2 number="1.3"><span class="header-section-number">1.3</span> Tidy data principles</h2>
+<p>Often, the data we have as part of epidemiologic surveillance may not are the version ready for any type of statistical analysis. This raw data MUST are processed into tidy data. At the basic level:</p>
 <ul>
 <li>Each row = one observation representing the unit of analysis</li>
 <li>Each column = one variable</li>
 <li>Each cell = standard data format, usually defined by a coding manual</li>
-<li>If there are going to be multiple tables, there should be an identifying (ID) variable linking tables together.</li>
+<li>If there are going to are multiple tables, there should are an identifying (ID) variable linking tables together.</li>
 </ul>
 <p>Tidy data <strong>must not have</strong>:</p>
 <ul>
 <li>Any blanks, unless these are true missing data</li>
 <li>Too many special characters, unless absolutely necessary</li>
-<li>Merged cells ANYWHERE - merged cells may be good visually but not for analysis</li>
-<li>Colors to identify variables - these must be defined as a new column (variable), as colors cannot be read into analysis</li>
+<li>Merged cells ANYWHERE - merged cells may are good visually but not for analysis</li>
+<li>Colors to identify variables - these must are defined as a new column (variable), as colors cannot are read into analysis</li>
 </ul>
 <p>For example, say we have five COVID-19 confirmed cases, and our raw data looks something like this on a spreadsheet:</p>
 <div class="figure">
@@ -419,7 +420,7 @@
 </tr>
 </tbody>
 </table>
-<p>Additionally, there should be some sort of coding manual. For example:</p>
+<p>Additionally, there should are some sort of coding manual. For example:</p>
 <ul>
 <li><code>ID</code>: Unique ID assigned to each confirmed case (when a case has been assigned two ID numbers, discard the latest ID number and move on - DO NOT shift ID numbers upward)</li>
 <li><code>DateOnset</code>: Date of symptom onset as reported by the patient (format: YYYY-MM-DD)</li>
@@ -429,14 +430,14 @@
 <li><code>DateTest</code>: Date when case was swabbed for confirmatory testing (format: YYYY-MM-DD)</li>
 <li><code>Result</code>: Result of test conducted (Positive, Negative, Equivocal, Invalid)</li>
 </ul>
-<p>We may prepare the tidy data using a spreadsheet program like Microsoft Excel, which may be familiar to most people. But we do not recommend this as we want our data processing to be <strong>reproducible</strong>. We want every modification of our data accounted for, and we want our rules on data processing to be clear that anyone else looking at the data may be able to follow along.</p>
+<p>We may prepare the tidy data using a spreadsheet program like Microsoft Excel, which may are familiar to most people. But we do not recommend this as we want our data processing to are <strong>reproducible</strong>. We want every modification of our data accounted for, and we want our rules on data processing to are clear that anyone else looking at the data may are able to follow along.</p>
 <p>To learn more about tidy data, refer to the following reference by Hadley Wickham <a href="http://vita.had.co.nz/papers/tidy-data.pdf">(Paper)</a> <a href="http://vimeo.com/33727555">(Video)</a>.</p>
 </div>
 </div>
 <div id="description-of-the-dummy-data" class="section level1" number="2">
 <h1 number="2"><span class="header-section-number">2</span> Description of the Dummy Data</h1>
 <p>We assume that we are working on surveillance on a new infectious disease. There is one reference laboratory that conducts confirmatory testing for this infectious disease, and we define confirmed cases as those who test positive with the confirmatory test. We only test suspect cases, defined as those with symptoms relevant to this infectious disease, which means we expect that everyone who has been tested has a date of symptom onset, although we typically expect that this field is blank more often than not.</p>
-<p>We test suspect cases regularly, sometimes twice within a 24-hour window. We are interested in both the first positive test result and the first negative test result after that, as we define clinical recovery as the day that a case has received a negative test result. For simplicity, we deal with only positive or negative test results, although in practice we expect test results to be inconclusive/equivocal or samples collected to be invalid for testing.</p>
+<p>We test suspect cases regularly, sometimes twice within a 24-hour window. We are interested in both the first positive test result and the first negative test result after that, as we define clinical recovery as the day that a case has received a negative test result. For simplicity, we deal with only positive or negative test results, although in practice we expect test results to are inconclusive/equivocal or samples collected to are invalid for testing.</p>
 <p>The reference laboratory has an information system, and everyday, the reference laboratory provides us with a <strong>laboratory linelist</strong> containing test results within the past 24 hours. The reference laboratory exports the file as a Microsoft Excel spreadsheet (<code>.xlsx</code>). Everyday, we process the laboratory linelist from the past 24 hours and all the cases since the beginning of the surveillance activity into the <strong>case linelist</strong>. We repeat this process everyday.</p>
 <ul>
 <li>Each row in the <strong>laboratory linelist</strong> is a <strong>laboratory result</strong>, and a unique ID number of the laboratory result is automatically assigned by the reference laboratory information system using the variable <code>LabSpecimenID</code>.
@@ -463,7 +464,7 @@
 <li><code>DateOnset</code>: Reported date of onset of symptoms relevant to the infectious disease</li>
 <li><code>Result</code>: Positive or negative</li>
 </ul>
-<p>When we conduct data processing, it is important that we set up clear <strong>adjudication</strong> or validation rules. Most of the time, the validation come outside of data processing. For example, we may instruct the reporting health facility to reencode the laboratory result in the information system. We may also review other health records and replace values manually in the information system. If we need to make modifications during data processing, we must be clear about the <strong>adjudication rules</strong>. We work with a fairly simple set of rules to demonstrate this point.</p>
+<p>When we conduct data processing, it is important that we set up clear <strong>adjudication</strong> or validation rules. Most of the time, the validation come outside of data processing. For example, we may instruct the reporting health facility to reencode the laboratory result in the information system. We may also review other health records and replace values manually in the information system. If we need to make modifications during data processing, we must are clear about the <strong>adjudication rules</strong>. We work with a fairly simple set of rules to demonstrate this point.</p>
 <p>The variables in the case linelist (<code>fakecaselinelist.csv</code>), as well as the adjudication rules are as follows:</p>
 <ul>
 <li><code>CaseID</code>: This is the processed <code>CaseID</code> variable from the laboratory information system.
@@ -478,13 +479,13 @@
 </ul></li>
 <li>The dates of specimen collection and result released are set up differently from the laboratory linelist. Specifically, in this case, we are primarily concerned with the first positive results (<code>DateSpecimenCollection_PositiveFirst</code> and <code>DateResultReleased_PositiveFirst</code>) and first negative result after that (<code>DateSpecimenCollection_NegativeFirst</code> and <code>DateResultReleased_NegativeFirst</code>).
 <ul>
-<li>This means that not all laboratory results from the same person are going to be used in this linelist of cases. There be some loss of information.</li>
+<li>This means that not all laboratory results from the same person are going to are used in this linelist of cases. There are some loss of information.</li>
 <li>This means that we have to restructure the values from the <code>DateSpecimenCollection</code>, <code>DateResultReleased</code>, and <code>Result</code> from the laboratory linelist to fit the columns in the case linelist.</li>
 </ul></li>
 <li>The date of symptom onset <code>DateOnset</code> is also carried over from the laboratory linelist, unless there are discrepancies with the values from a more recent laboratory result entry.
 <ul>
 <li>For this example, our rule is that we keep the earliest recorded date of symptom onset, e.g. if the original date of symptom onset recorded was July 1, 2021, but the latest laboratory result recorded it as July 3, 2021, then we keep July 1, 2021.</li>
-<li>We also check whether the date of symptom onset is on or before the date of specimen collection, as our hypothetical testing policy states that only symptomatic cases are going to be tested. If the date of symptom onset is after the date of specimen collection, then we replace the date of symptom onset with the date of specimen collection.</li>
+<li>We also check whether the date of symptom onset is on or before the date of specimen collection, as our hypothetical testing policy states that only symptomatic cases are going to are tested. If the date of symptom onset is after the date of specimen collection, then we replace the date of symptom onset with the date of specimen collection.</li>
 </ul></li>
 </ul>
 <p><br></p>
@@ -494,8 +495,8 @@
 <div id="downloading-the-files" class="section level2" number="3.1">
 <h2 number="3.1"><span class="header-section-number">3.1</span> Downloading the files</h2>
 <p>We may download all the files in the <a href="https://github.com/neljasonhaw/SurveillanceR">Github repository here</a>. Click on the green button Code then click Download ZIP. Unzip and look for the file names <code>fakelablinelist.csv</code> and <code>fakecaselinelist.csv</code>.</p>
-<p>There is also an R script file called <code>DataProcessing.R</code>. That R script file contains all the codes in this guide. We may open that as we follow along. All of the other files are not relevant for the guide or are output files that be generated as part of the analysis.</p>
-<p>While the files may usually be found in our Downloads folder, we move it to a new folder anywhere else in our computer (say, your Documents folder) and give it a name. This new folder serve as our working directory, so remember where it is.</p>
+<p>There is also an R script file called <code>DataProcessing.R</code>. That R script file contains all the codes in this guide. We may open that as we follow along. All of the other files are not relevant for the guide or are output files that are generated as part of the analysis.</p>
+<p>While the files may usually are found in our Downloads folder, we move it to a new folder anywhere else in our computer (say, your Documents folder) and give it a name. This new folder serve as our working directory, so remember where it is.</p>
 </div>
 <div id="creating-a-new-rstudio-project" class="section level2" number="3.2">
 <h2 number="3.2"><span class="header-section-number">3.2</span> Creating a new RStudio Project</h2>
@@ -504,7 +505,7 @@
 <li>The <code>New Project Wizard</code> dialog box opens. Select <code>Existing Directory</code>.</li>
 <li>Under <code>Project working directory</code>, select <code>Browse...</code> and locate the folder of the working directory.</li>
 <li>Select <code>Create Project</code>. At this point, we have created a new project file (.Rproj) as well as set the working directory.</li>
-<li>Create a new R script file using the keyboard shortcut <code>Ctrl-Shift-N</code> or going to <code>File</code> &gt; <code>New File</code> &gt; <code>R Script</code> or clicking on the <code>New File</code> button on the topmost left corner right below the menu bar then clicking <code>R Script</code>. The left side of the environment should split into two - with the script file found on the upper left side. The script file is similar to a do file for those who are familiar with Stata. Ideally, we should be saving all our code in a script file in case we need to redo or repeat analyses so that all we have to do is to run the script rather than coding everything from scratch again.</li>
+<li>Create a new R script file using the keyboard shortcut <code>Ctrl-Shift-N</code> or going to <code>File</code> &gt; <code>New File</code> &gt; <code>R Script</code> or clicking on the <code>New File</code> button on the topmost left corner right below the menu bar then clicking <code>R Script</code>. The left side of the environment should split into two - with the script file found on the upper left side. The script file is similar to a do file for those who are familiar with Stata. Ideally, we should are saving all our code in a script file in case we need to redo or repeat analyses so that all we have to do is to run the script rather than coding everything from scratch again.</li>
 <li>Save the script file every now and then. Give it a name. In the repository, this is named <code>DataProcessing.R</code>. Open that script file if we just want to run the code.</li>
 </ol>
 <p>Alternatively, if we are familiar with setting up Git on RStudio, we may also set up the RStudio project by cloning the repository instead of downloading the ZIP file.</p>
@@ -1869,52 +1870,109 @@ NA
 </div>
 <div id="overview-of-the-data-processing-workflow" class="section level2" number="3.6">
 <h2 number="3.6"><span class="header-section-number">3.6</span> Overview of the data processing workflow</h2>
-<p>Before we begin the actual data processing, we first outline the steps that we be taking.</p>
+<p>Before we begin the actual data processing, we first outline the steps that we are taking.</p>
 <ol style="list-style-type: decimal">
 <li>Process new cases from the laboratory linelist.
 <ol style="list-style-type: lower-alpha">
 <li>Identify cases that have updates in the laboratory linelist.
 <ol style="list-style-type: lower-roman">
-<li>Create a data frame of ID variable pairs - <code>LabSpecimenID</code> from the laboratory linelist and <code>CaseID</code> from the case linelist. Store results in data frame <code>dedup_df</code>.</li>
+<li>Create a data frame of ID variable pairs - <code>LabSpecimenID</code> from the laboratory linelist and <code>CaseID</code> from the case linelist. Store results in the data frame <code>dedup_df</code>.</li>
 <li>Add names and other information in aid of manual deduplication.
 <ol style="list-style-type: decimal">
-<li>Store laboratory linelist information in tibble <code>lab_today_info</code>.</li>
-<li>Store case linelinse information in tibble <code>case_yday_info</code>.</li>
-<li>Merge tibble <code>lab_today_info</code> into data frame <code>dedup_df</code>. Store results in data frame <code>dedup_df_info</code>.</li>
-<li>Merge tibble <code>case_yday_info</code> into data frame <code>dedup_df_info</code>.</li>
+<li>Store laboratory linelist information in the tibble <code>lab_today_info</code>.</li>
+<li>Store case linelist information in the tibble <code>case_yday_info</code>.</li>
+<li>Merge the tibble <code>lab_today_info</code> into the data frame <code>dedup_df</code>. Store results in the data frame <code>dedup_df_info</code>.</li>
+<li>Merge the tibble <code>case_yday_info</code> into the data frame <code>dedup_df_info</code>.</li>
 </ol></li>
-<li>Generate similarity scores using Jaro-Winkler (<code>jw</code>) distance. Store results in data frame <code>dedup_df_jw</code>. 1) Keep results with <code>jw</code> less than or equal to 0.3.</li>
-<li>Manually inspect results in data frame <code>dedup_df_jw</code>.
+<li>Generate similarity scores using Jaro-Winkler (<code>jw</code>) distance. Store results in the data frame <code>dedup_df_jw</code>. 1) Keep results with <code>jw</code> less than or equal to 0.3.</li>
+<li>Manually inspect results in the data frame <code>dedup_df_jw</code>.
 <ol style="list-style-type: decimal">
-<li>Subset rows that are duplicates from case linelist. These are the rows that we check later on to update the date of existing cases. Store results in data frame <code>dedup_df_jw_manual</code>.</li>
+<li>Subset rows that are duplicates from case linelist. These are the rows that we check later on to update the date of existing cases. Store results in the data frame <code>dedup_df_jw_manual</code>.</li>
 </ol></li>
 </ol></li>
 <li>Identify new cases within the laboratory linelist.
 <ol style="list-style-type: lower-roman">
-<li>Filter positive results from laboratory linelist. Store in tibble <code>lab_today_pos</code></li>
-<li>Filter out duplicates already indentified from the data frame <code>dedup_df_jw_manual</code> as those cases are not new cases.</li>
+<li>Filter positive results from laboratory linelist. Store in the tibble <code>lab_today_pos</code>.
+<ol style="list-style-type: decimal">
+<li>Filter out duplicates already identified from the data frame <code>dedup_df_jw_manual</code> as those cases are not new cases. Store the results in the tibble <code>lab_today_pos_nodup</code></li>
 </ol></li>
+<li>Create a data frame of ID variable pairs - <code>LabSpecimenID</code> from tibble <code>lab_today_pos_nodup</code>. Store results in the data frame <code>dedup_new_df</code>.</li>
+<li>Add names and other information in aid of manual deduplication and adjudication.</li>
+</ol>
+<ol style="list-style-type: decimal">
+<li>Store laboratory linelist information in the tibble <code>lab_today_pos_nodup_info</code>.</li>
+<li>Merge the data frame <code>dedup_new_df</code> with the tibble <code>lab_today_pos_nodup_info</code>. Store results in the data frame <code>dedup_new_df_info</code>.</li>
+<li>Merge the data frame <code>dedup_new_df_info</code> with the tibble <code>lab_today_pos_nodup_info</code>. We do this twice because we paired the <code>LabSpecimenID</code> of the tibble <code>lab_today_pos_nodup</code> by itself.</li>
+</ol>
+<ol start="3" style="list-style-type: lower-roman">
+<li>Generate similarity scores using Jaro-Winkler (<code>jw</code>) distance. Store results in the data frame <code>dedup_new_df_jw</code>. 1) Keep results with <code>jw</code> less than or equal to 0.3.</li>
+<li>Manually inspect results in the data frame <code>dedup_df_new_jw</code>.
+<ol style="list-style-type: decimal">
+<li>Subset rows that are duplicates of one another. These are the rows that we check later on to create a new case linelist.</li>
+<li>Manually tag a new ID variable to identify duplicate groups. Name the column <code>DuplicateID</code>. Store results in the data frame <code>dedup_df_new_jw_manual</code>.</li>
+</ol></li>
+</ol></li>
+</ol></li>
+<li>Save new case data.
+<ol style="list-style-type: lower-alpha">
+<li>Filter new cases with no duplication issues. Store results in the tibble <code>lab_today_pos_nodup_nodup</code> (we use <code>nodup</code> twice to indicate this has been deduplicated twice over).</li>
+<li>Transform the tibble <code>lab_today_pos_nodup_nodup</code> into the columns of the tibble <code>case_yday</code> so that we may append these new cases to the case linelist later on. Store results in the tibble <code>case_today</code>.</li>
+<li><strong>The tibble <code>case_today</code> contains all the new cases processed from the laboratory linelist.</strong> So far, we have the new cases with no issues in deduplication. We will add the deduplicated new cases later on.</li>
+</ol></li>
+<li>Adjudicate on manually deduplicated data.
+<ol style="list-style-type: lower-alpha">
+<li>Compile new cases, and this time include the new cases with duplicates stored in <code>dedup_new_df_jw_manual</code>.
+<ol style="list-style-type: lower-roman">
+<li>Implement the adjudication rules and store the results in the tibble <code>case_today_dedup</code>.</li>
+<li>Add the rows of the tibble <code>case_today_dedup</code> into the tibble <code>case_today</code>. At this point, <strong>we have completed the new cases for addition to the case linelist.</strong></li>
+</ol></li>
+<li>Update data of current cases.
+<ol style="list-style-type: lower-roman">
+<li>Retrieve the ID pairs from the tibble <code>dedup_df_jw_manual</code>. Store results in the tibble <code>dedup_df_jw_IDpairs</code></li>
+<li>Merge the rest of the information from <code>lab_today</code> with <code>dedup_df_jw_IDpairs</code>. Store results in the tibble <code>dedup_df_jw_allinfo</code></li>
+<li>Transform the tibble <code>dedup_df_jw_allinfo</code> into the columns of the tibble <code>case_yday</code>. Apply the adjudication rules. Store results in the tibble <code>case_today_newinfo</code>.</li>
+<li>Retrieve the rows from the tibble <code>case_yday</code> that need updating. Store results in the tibble <code>case_today_oldinfo</code>.</li>
+<li>Combine the rows from the tibbles <code>case_today_newinfo</code> and <code>case_today_oldinfo</code>. Store in a data frame <code>case_today_recon</code>. We want to compare the old data from <code>case_today_oldinfo</code> with the new data from <code>case_today_newinfo</code>.</li>
+<li>Apply the adjudication rules. Store results in the tibble <code>case_yday_update</code>. <strong>The tibble <code>case_yday_update</code> contains all the old cases updated with data from the laboratory linelist.</strong></li>
+</ol></li>
+</ol></li>
+<li>Compile the latest case linelist.
+<ol style="list-style-type: lower-alpha">
+<li>From the tibble <code>case_yday</code>, filter out the <code>CaseID</code> values that are in <code>case_yday_update</code>. These are the cases that have no new updates. Store results in the tibble <code>case_yday_noupdate</code>. <strong>The tibble <code>case_yday_noupdate</code> contains all the old cases with no new updates from the laboratory linelist.</strong></li>
+<li>Combine the rows from the tibbles <code>case_today</code>, <code>case_yday_update</code>, and <code>case_yday_noupdate</code>. Store results in the tibble called <code>case_latest</code>. <strong>The tibble <code>case_latest</code> contains the latest case linelist.</strong></li>
+<li>Check date inconsistencies, e.g. date of symptom onset should not be after date of specimen collection of first positive test according to our hypothetical testing policy. Replace date of symptom onset with the date of specimen collection of first positive test if that is the case.</li>
+<li>Export the <code>case_latest</code> linelist into Microsoft Excel spreadsheet format.</li>
+<li>Tomorrow, the process repeats again and today’s tibble <code>case_latest</code> becomes tomorrow’s tibble <code>case_yday</code>.</li>
 </ol></li>
 </ol>
 </div>
 <div id="overview-of-functions" class="section level2" number="3.7">
 <h2 number="3.7"><span class="header-section-number">3.7</span> Overview of functions</h2>
-<p>The following functions be used from the following packages:</p>
+<p>The following functions are used from the following packages:</p>
 <ol style="list-style-type: decimal">
 <li>Base R</li>
 </ol>
 <ul>
+<li><code>colnames()</code>: Names columns in a data frame</li>
 <li><code>expand.grid()</code>: Creates a data frame from all combinations of two vectors</li>
+<li><code>max()</code>: Takes the maximum value of a vector; <code>min()</code> takes the minimum</li>
 <li><code>merge()</code>: Merges two data frames by common columns</li>
+<li><code>nchar()</code>: Calculates the number of characters in a string value</li>
+<li><code>rbind()</code>: Combines rows of two data frames, must have the same columns; <code>cbind()</code> combines columns, must have the same rows</li>
+<li><code>which.max()</code>: Takes the row index of the maximum value of the vector</li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
 <li><code>tidyverse</code> (specifically, <code>dplyr</code>)</li>
 </ol>
 <ul>
 <li><code>arrange()</code>: Sorts data frame based on specified column</li>
+<li><code>case_when()</code>: Vectorizes if/else statements. For those familiar with SQL, this is similar to the <code>CASE WHEN</code> statement.</li>
 <li><code>filter()</code>: Filters rows based on certain conditions</li>
+<li><code>group_by()</code>: Groups rows based on a values of the specified variable</li>
 <li><code>relocate()</code>: Arranges columns in a data frame</li>
+<li><code>rename()</code>: Renames column names (syntax: <code>newname</code> = <code>oldname</code>)</li>
 <li><code>select()</code>: Selects columns in a data frame</li>
+<li><code>summarize()</code>: Summarizes data across specified columns, often used together with <code>group_by()</code></li>
 <li>We also learn two operators:
 <ul>
 <li>The pipe <code>%&gt;%</code> operator, which “pipes” arguments in a function to make code more readable</li>
@@ -1925,9 +1983,15 @@ NA
 <li><code>readxl</code></li>
 </ol>
 <ul>
-<li><code>read_xlsx</code>: Imports Micrsoft Excel spreadsheet files in <code>.xlsx</code> format</li>
+<li><code>read_xlsx()</code>: Imports Microsoft Excel spreadsheet files in <code>.xlsx</code> format</li>
 </ul>
 <ol start="4" style="list-style-type: decimal">
+<li><code>writexl</code></li>
+</ol>
+<ul>
+<li><code>write_xlsx()</code>: Exports a data frame to a Microsoft Excel Spreadsheet in <code>xlsx.</code> format</li>
+</ul>
+<ol start="5" style="list-style-type: decimal">
 <li><code>tidystringdist</code></li>
 </ol>
 <ul>
@@ -1941,17 +2005,17 @@ NA
 <p>We now deduplicate new cases from the lab linelist. We need to conduct two deduplication activities:</p>
 <ul>
 <li>First, we need to check if any of the results from the laboratory linelist (<code>lab_today</code>) have already been added as cases in the case linelist (<code>case_yday</code>), and use these results to update the data of these cases.</li>
-<li>Second, we need to deduplicate new cases within the laboratory linelist. There might be cases whose names appear twice in the laboratory linelist but are new cases that are not yet found on the case linelist.</li>
+<li>Second, we need to deduplicate new cases within the laboratory linelist. There might are cases whose names appear twice in the laboratory linelist but are new cases that are not yet found on the case linelist.</li>
 </ul>
 <p>Because our hypothetical laboratory information system can only detect exact matches of names for the generation of the <code>CaseID</code>, we need to use fuzzy matching to manually deduplicate names.</p>
 <div id="identifying-cases-that-have-updates-in-the-laboratory-linelist" class="section level2" number="4.1">
 <h2 number="4.1"><span class="header-section-number">4.1</span> Identifying cases that have updates in the laboratory linelist</h2>
 <div id="creating-a-data-frame-of-id-variable-pairs" class="section level3" number="4.1.1">
 <h3 number="4.1.1"><span class="header-section-number">4.1.1</span> Creating a data frame of ID variable pairs</h3>
-<p>We create a tibble (<code>dedup_df</code>) that contains the column <code>LabSpecimenID</code> of the tibble <code>lab_today</code> paired with all <code>CaseID</code> values in the tibble <code>case_yday</code>. Recall that these ID variables uniquely identify each row. Therefore, the tibble <code>dedup_df</code> represents all pairs of IDs that be useful for deduplication. We use the base R function <code>expand.grid()</code> to generate a data frame of all ID pairs. To make our code readable, we use <code>dplyr</code>’s pipe operator (<code>%&gt;%</code>) instead of nesting parentheses.</p>
+<p>We create a tibble (<code>dedup_df</code>) that contains the column <code>LabSpecimenID</code> of the tibble <code>lab_today</code> paired with all <code>CaseID</code> values in the tibble <code>case_yday</code>. Recall that these ID variables uniquely identify each row. Therefore, the tibble <code>dedup_df</code> represents all pairs of IDs that are useful for deduplication. We use the base R function <code>expand.grid()</code> to generate a data frame of all ID pairs. To make our code readable, we use <code>dplyr</code>’s pipe operator (<code>%&gt;%</code>) instead of nesting parentheses.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate all pairwise matches of IDs</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># By default, expand.grid treats the string values as factors, </span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># so we  have to instruct R not to do that</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># so we have to instruct R not to do that</span></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>dedup_df <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(lab_today<span class="sc">$</span>LabSpecimenID, case_yday<span class="sc">$</span>CaseID, </span>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># By default expand.grid saves the columns as V1 and V2. </span></span>
@@ -1991,13 +2055,13 @@ NA
 <span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The command appends a suffix .x or .y to indicate which column came from which</span></span>
 <span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co"># We want to put the case_yday_id right before the Name.y column</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Visually this  remind us that lab_today_info are columns with suffix .x</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Visually this remind us that lab_today_info are columns with suffix .x</span></span>
 <span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co"># and case_yday_info are columns with suffix .y</span></span>
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>dedup_df_info <span class="ot">&lt;-</span> dedup_df_info <span class="sc">%&gt;%</span> <span class="fu">relocate</span>(case_yday_id, <span class="at">.before =</span> Name.y)</span></code></pre></div>
 </div>
 <div id="generating-similarity-scores" class="section level3" number="4.1.3">
 <h3 number="4.1.3"><span class="header-section-number">4.1.3</span> Generating similarity scores</h3>
-<p>We now run the <code>tidy_stringdist()</code> function to generate similarity scores of all our pairwise names. You may read more about the different methods under this command by reading the documentation (Type <code>?tidy_stringdist-metrics</code> on the Console). If we do not specify the method, the command generates a score using all available methods (which can be time-consuming), so in this example, we just use one - the Jaro-Winkler distance (<code>jw</code>), which provides similarity scores on a scale of 0 to 1, where 0 is an exact match (the lower the score, the likelier it is a duplicate). We store the results in the data frame <code>dedup_df_jw</code> and retain pairs with a score of 0.3 and below for further inspection using <code>dplyr</code>’s <code>filter()</code> function, then sort by <code>jw</code> using <code>dplyr</code>’s <code>arrange()</code> function. Feel free to experiment with what method and cutoff works.</p>
+<p>We now run the <code>tidy_stringdist()</code> function to generate similarity scores of all our pairwise names. You may read more about the different methods under this command by reading the documentation (Type <code>?tidy_stringdist-metrics</code> on the Console). If we do not specify the method, the command generates a score using all available methods (which can are time-consuming), so in this example, we just use one - the Jaro-Winkler distance (<code>jw</code>), which provides similarity scores on a scale of 0 to 1, where 0 is an exact match (the lower the score, the likelier it is a duplicate). We store the results in the data frame <code>dedup_df_jw</code> and retain pairs with a score of 0.3 and below for further inspection using <code>dplyr</code>’s <code>filter()</code> function, then sort by <code>jw</code> using <code>dplyr</code>’s <code>arrange()</code> function. Feel free to experiment with what method and cutoff works.</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use Jaro-Winkler distance to generate similarity scores</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co"># v1 and v2 are the column of names</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>dedup_df_jw <span class="ot">&lt;-</span> <span class="fu">tidy_stringdist</span>(dedup_df_info, <span class="at">v1 =</span> <span class="st">&quot;Name.x&quot;</span>, </span>
@@ -2549,7 +2613,7 @@ San Wadhor
 <p>We first filter only positive results from the laboratory linelist (<code>lab_today</code>) because these contain all the new cases and current cases with subsequent positive results. We save the filtered data in a tibble called <code>lab_today_pos</code>.</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter positive results only</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>lab_today_pos <span class="ot">&lt;-</span> lab_today <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Result <span class="sc">==</span> <span class="st">&quot;Positive&quot;</span>)</span></code></pre></div>
-<p>Then, we filter out the duplicates that we have identified from <code>dedup_df_jw_manual</code>. We use the <code>filter()</code> function with the <code>%in%</code> operator. The <code>%in%</code> operator works like this: If the code is written as <code>X %in% Y</code>, then this means that we filter <code>X</code> based on the values in <code>Y</code>. In our case, <code>X</code> is the <code>LabSpecimenID</code> and <code>Y</code> is <code>dedup_df_jw_manual$lab_today_id</code>. Since we need the values that are <strong>NOT</strong> in <code>Y</code>, we need to enclose the entire expression with <code>!()</code> which gives us the opposite of what we need to filter. We save the filtered data in a tibble called <code>lab_today_pos_nodup</code></p>
+<p>Then, we filter out the duplicates that we have identified from <code>dedup_df_jw_manual</code>. We use <code>dplyr</code>’s <code>filter()</code> function with the <code>%in%</code> operator. The <code>%in%</code> operator works like this: If the code is written as <code>X %in% Y</code>, then this means that we filter <code>X</code> based on the values in <code>Y</code>. In our case, <code>X</code> is the <code>LabSpecimenID</code> and <code>Y</code> is <code>dedup_df_jw_manual$lab_today_id</code>. Since we need the values that are <strong>NOT</strong> in <code>Y</code>, we need to enclose the entire expression with <code>!()</code> which gives us the opposite of what we need to filter. We save the filtered data in a tibble called <code>lab_today_pos_nodup</code>.</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># !() means we want the opposite result of the filter expression</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># X %in% Y means we want to filter X based on values in Y</span></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># We want to filter by laboratory result ID</span></span>
@@ -2877,10 +2941,10 @@ Positive
 </tr>
 </tbody>
 </table>
-<p>This is the tibble that contains new cases, but has not yet been deduplicated. For example, rows 2 and 3, 4 and 5, and 6 and 7 are potentially duplicates. Notice how Penelope Fields is in this tibble because we have determined beforehand that the Penelope F. Fields in the case linelist is not the same Penelope Fields.</p>
+<p>This is the tibble that contains new cases, but have not yet been deduplicated. For example, rows 2 and 3, 4 and 5, and 6 and 7 are potentially duplicates. Notice how Penelope Fields is in this tibble because we have determined beforehand that the Penelope F. Fields in the case linelist is not the same Penelope Fields.</p>
 </div>
-<div id="setting-up-the-deduplication-pairs" class="section level3" number="4.2.2">
-<h3 number="4.2.2"><span class="header-section-number">4.2.2</span> Setting up the deduplication pairs</h3>
+<div id="creating-a-data-frame-of-id-variable-pairs-1" class="section level3" number="4.2.2">
+<h3 number="4.2.2"><span class="header-section-number">4.2.2</span> Creating a data frame of ID variable pairs</h3>
 <p>We now create a tibble (<code>dedup_new_df</code>) of <code>LabspecimenID</code> in the tibble <code>lab_today_pos_nodup</code> paired with all other <code>LabSpecimenID</code> in the same tibble. We use the <code>expand.grid()</code> function again. To save some space, we automatically delete the pairs that are equal to one another using the <code>filter()</code> function.</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a tibble that pairs all LabSpecimenID with themselves</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>dedup_new_df <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(lab_today_pos_nodup<span class="sc">$</span>LabSpecimenID, </span>
@@ -2895,7 +2959,7 @@ Positive
 </div>
 <div id="add-names-and-other-information-for-deduplication-and-adjudication" class="section level3" number="4.2.3">
 <h3 number="4.2.3"><span class="header-section-number">4.2.3</span> Add names and other information for deduplication and adjudication</h3>
-<p>We now add more information to the names to aid us in decision making on whether or not the pairs are duplicates, and to decide which among the duplicates do we retain. We use age, sex, and municipality, date of symptom onset, date of specimen collection. and date of result released to make that decision. We also add the <code>CaseID</code> variable. We store the filtered columns in the tibble <code>lab_today_pos_nodup_info</code>.</p>
+<p>We now add more information to the names to aid us in decision making on whether or not the pairs are duplicates, and to decide which among the duplicates do we retain. We use <code>Age</code>, <code>Sex</code>, <code>Municipality</code>, <code>DateOnset</code>, <code>DateSpecimenCollection</code>, and <code>DateResultReleased</code> to make that decision. We also add the <code>CaseID</code> variable. We store the filtered columns in the tibble <code>lab_today_pos_nodup_info</code>.</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select columns in aid of manual deduplication</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>lab_today_pos_nodup_info <span class="ot">&lt;-</span> lab_today_pos_nodup <span class="sc">%&gt;%</span> </span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(LabSpecimenID, CaseID, Name, Age, Sex, Municipality, </span>
@@ -2912,8 +2976,8 @@ Positive
 <span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Relocate LabSpecimen2 before CaseID.y</span></span>
 <span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>dedup_new_df_info <span class="ot">&lt;-</span> dedup_new_df_info <span class="sc">%&gt;%</span> <span class="fu">relocate</span>(LabSpecimenID2, <span class="at">.before =</span> CaseID.y)</span></code></pre></div>
 </div>
-<div id="generate-similariity-scores" class="section level3" number="4.2.4">
-<h3 number="4.2.4"><span class="header-section-number">4.2.4</span> Generate similariity scores</h3>
+<div id="generate-similarity-scores" class="section level3" number="4.2.4">
+<h3 number="4.2.4"><span class="header-section-number">4.2.4</span> Generate similarity scores</h3>
 <p>We now run the <code>tidy_stringdist()</code> function to generate similarity scores of all our pairwsise names. We use the <code>jw</code> method and retain scores 0.3 and below for further inspection. We store the results in a new data frame called <code>dedup_new_df_jw</code>. We also sort the results by <code>jw</code> and <code>Name.x</code> (the first name column) in aid of manual inspection.</p>
 <div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use Jaro-Winkler distance to generate similarity scores</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># v1 and v2 are the column of names</span></span>
@@ -3373,9 +3437,9 @@ Port Sipleach
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>dedup_new_df_jw_manual <span class="ot">&lt;-</span> dedup_new_df_jw</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a new column that manually tags the duplicates</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Row 1 and 2  have DuplicateID 1</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Row 3 and 4  have DuplicateID 2</span></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Row 5 and 6  have DuplicateID 3</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Row 1 and 2 have DuplicateID 1</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Row 3 and 4 have DuplicateID 2</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Row 5 and 6 have DuplicateID 3</span></span>
 <span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>dedup_new_df_jw_manual<span class="sc">$</span>DuplicateID <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">3</span>)</span></code></pre></div>
 <p><br></p>
 </div>
@@ -3653,7 +3717,7 @@ NA
 <li>For <code>DateResultReleased</code>, the earlier one is kept for <code>DateResultReleased_PositiveFirst</code>.</li>
 <li><code>DateSpecimenCollection_NegativeFirst</code> and <code>DateResultReleased_NegativeFirst</code> are both blank.</li>
 </ul>
-<p>Because we tagged the duplicates manually, we would have to select the values we need manually as well. There is no workaround for this, and it might be tempting to do this in Microsoft Excel. <strong>DON’T.</strong> Resist all temptation. The code end up long, but the advantage is that we have a clear paper trail of what decisions we have made.</p>
+<p>Because we tagged the duplicates manually, we would have to select the values we need manually as well. There is no workaround for this, and it might are tempting to do this in Microsoft Excel. <strong>DON’T.</strong> Resist all temptation. The code end up long, but the advantage is that we have a clear paper trail of what decisions we have made.</p>
 <p>We use <code>dplyr</code>’s <code>group_by()</code> function to tell R that we plan to adjudicate by <code>DuplicateID</code>. Then, we use the <code>dplyr</code>’s <code>summarize()</code> function to define our columns according to <code>case_today</code> as we append them later, as well as implement the adjudication rules. We use the base R functions <code>min()</code> and <code>max()</code> for the ones where we need to identify the minimum and maximum values. For <code>DateOnset</code>, we also have to specify that we have to exclude <code>NA</code> from deciding which is the minimum value. For <code>Name</code>, we use the base R function <code>which.max()</code> to identify the row number of the longest number of characters, and we use the base R function <code>nchar()</code> to calculate the number of characters. We then save our result in the tibble <code>case_today_dedup</code>:</p>
 <div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use all the .x-suffixed columns</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Adjudication rules</span></span>
@@ -3901,9 +3965,9 @@ NA
 <h2 number="6.2"><span class="header-section-number">6.2</span> Updating current cases</h2>
 <div id="retrieving-id-pairs" class="section level3" number="6.2.1">
 <h3 number="6.2.1"><span class="header-section-number">6.2.1</span> Retrieving ID pairs</h3>
-<p>We first retrieve the <code>LabSpecimenID</code> and <code>CaseID</code> pairs from the data frame <code>dedup_df_jw</code>. In that data frame, these correspond to the columns <code>lab_today_id</code> and <code>case_yday_id</code>. We store the ID pairs in a data frame called <code>dedup_df_jw_IDpairs</code></p>
+<p>We first retrieve the <code>LabSpecimenID</code> and <code>CaseID</code> pairs from the data frame <code>dedup_df_jw_manual</code>. In that data frame, these correspond to the columns <code>lab_today_id</code> and <code>case_yday_id</code>. We store the ID pairs in a data frame called <code>dedup_df_jw_IDpairs</code></p>
 <div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Retrieve ID pairs</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>dedup_df_jw_IDpairs <span class="ot">&lt;-</span> dedup_df_jw <span class="sc">%&gt;%</span> <span class="fu">select</span>(lab_today_id, case_yday_id)</span></code></pre></div>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>dedup_df_jw_IDpairs <span class="ot">&lt;-</span> dedup_df_jw_manual <span class="sc">%&gt;%</span> <span class="fu">select</span>(lab_today_id, case_yday_id)</span></code></pre></div>
 </div>
 <div id="merging-with-the-rest-of-the-information" class="section level3" number="6.2.2">
 <h3 number="6.2.2"><span class="header-section-number">6.2.2</span> Merging with the rest of the information</h3>
@@ -3917,10 +3981,10 @@ NA
 </div>
 <div id="preparing-to-add-to-case-linelist-1" class="section level3" number="6.2.3">
 <h3 number="6.2.3"><span class="header-section-number">6.2.3</span> Preparing to add to case linelist</h3>
-<p>Now we transform the the data frame <code>dedup_df_jw_allinfo</code> into the columns of the tibble <code>case_yday</code> so that it be easier for us to update case information. We store the new tibble as <code>case_yday_newinfo</code>.</p>
+<p>Now we transform the the data frame <code>dedup_df_jw_allinfo</code> into the columns of the tibble <code>case_yday</code> so that it are easier for us to update case information. We store the new tibble as <code>case_yday_newinfo</code>.</p>
 <ul>
 <li>We carry over the values of <code>CaseID</code>, <code>Name</code>, <code>Age</code>, <code>Sex</code>, <code>Municipality</code>, and <code>DateOnset</code></li>
-<li>The values in <code>DateSpecimenCollection</code> and <code>DateResultReleased</code> are assigned to <code>DateSpecimenCollection_PositiveFirst</code> and <code>DateResultReleased_PositiveFirst</code> if the result is positive, and <code>DateSpecimenCollection_NegativeFirst</code> and <code>DateResultReleased_NegativeFirst</code> if the result is negative. We use the <code>dplyr</code>’s <code>mutate()</code> and <code>case_when()</code> functions for this. Note that the pipe operator (<code>%&gt;%</code>) can be used to execute multiple instructions at once.</li>
+<li>The values in <code>DateSpecimenCollection</code> and <code>DateResultReleased</code> are assigned to <code>DateSpecimenCollection_PositiveFirst</code> and <code>DateResultReleased_PositiveFirst</code> if the result is positive, and <code>DateSpecimenCollection_NegativeFirst</code> and <code>DateResultReleased_NegativeFirst</code> if the result is negative. We use the <code>dplyr</code>’s <code>mutate()</code> and <code>case_when()</code> functions for this. Note that the pipe operator (<code>%&gt;%</code>) can are used to execute multiple instructions at once.</li>
 <li>We then remove the columns <code>lab_today_id</code>, <code>CaseID</code>, <code>DateSpecimenCollection</code>, <code>DateResultReleased</code> and <code>Result</code> since we not need them anymore after this. <code>CaseID</code> in this data frame pertain to the autogenerated <code>CaseID</code> from the laboratory linelist. We need the column <code>case_yday_id</code> because that is the ID variable that allow us to link them to the tibble <code>case_yday</code>. then we rename <code>case_yday_id</code> to <code>CaseID</code>.</li>
 </ul>
 <div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>case_yday_newinfo <span class="ot">&lt;-</span> dedup_df_jw_allinfo</span>
@@ -4102,41 +4166,6 @@ NA
 4
 </td>
 <td style="text-align:right;">
-13566
-</td>
-<td style="text-align:left;">
-Penelope Fields
-</td>
-<td style="text-align:right;">
-16
-</td>
-<td style="text-align:left;">
-F
-</td>
-<td style="text-align:left;">
-Mexe
-</td>
-<td style="text-align:left;">
-2021-07-15
-</td>
-<td style="text-align:left;">
-2021-07-16
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-5
-</td>
-<td style="text-align:right;">
 13597
 </td>
 <td style="text-align:left;">
@@ -4169,7 +4198,7 @@ NA
 </tr>
 <tr>
 <td style="text-align:left;">
-6
+5
 </td>
 <td style="text-align:right;">
 13289
@@ -4204,7 +4233,7 @@ NA
 </tr>
 <tr>
 <td style="text-align:left;">
-7
+6
 </td>
 <td style="text-align:right;">
 13547
@@ -4239,7 +4268,7 @@ NA
 </tr>
 <tr>
 <td style="text-align:left;">
-8
+7
 </td>
 <td style="text-align:right;">
 13788
@@ -4274,7 +4303,7 @@ NA
 </tr>
 <tr>
 <td style="text-align:left;">
-9
+8
 </td>
 <td style="text-align:right;">
 18400
@@ -4309,7 +4338,7 @@ NA
 </tr>
 <tr>
 <td style="text-align:left;">
-10
+9
 </td>
 <td style="text-align:right;">
 18793
@@ -4560,41 +4589,6 @@ Eastmsallbuck Creek
 5
 </td>
 <td style="text-align:right;">
-13566
-</td>
-<td style="text-align:left;">
-Penelope F. Fields
-</td>
-<td style="text-align:right;">
-16
-</td>
-<td style="text-align:left;">
-F
-</td>
-<td style="text-align:left;">
-Mexe
-</td>
-<td style="text-align:left;">
-2021-07-02
-</td>
-<td style="text-align:left;">
-2021-07-02
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-2021-07-01
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-6
-</td>
-<td style="text-align:right;">
 13597
 </td>
 <td style="text-align:left;">
@@ -4627,7 +4621,7 @@ NA
 </tr>
 <tr>
 <td style="text-align:left;">
-7
+6
 </td>
 <td style="text-align:right;">
 13788
@@ -4662,7 +4656,7 @@ NA
 </tr>
 <tr>
 <td style="text-align:left;">
-8
+7
 </td>
 <td style="text-align:right;">
 18400
@@ -4697,7 +4691,7 @@ Eastmsallbuck Creek
 </tr>
 <tr>
 <td style="text-align:left;">
-9
+8
 </td>
 <td style="text-align:right;">
 18793
@@ -4937,13 +4931,13 @@ Eastmsallbuck Creek
 Penelope F. Fields
 </td>
 <td style="text-align:right;">
-16
+45
 </td>
 <td style="text-align:left;">
 F
 </td>
 <td style="text-align:left;">
-Mexe
+San Wadhor
 </td>
 <td style="text-align:left;">
 2021-07-02
@@ -5476,13 +5470,13 @@ Eastmsallbuck Creek
 Penelope F. Fields
 </td>
 <td style="text-align:right;">
-16
+45
 </td>
 <td style="text-align:left;">
 F
 </td>
 <td style="text-align:left;">
-Mexe
+San Wadhor
 </td>
 <td style="text-align:left;">
 2021-07-02
@@ -5817,6 +5811,15 @@ NA
 </tr>
 </tbody>
 </table>
+</div>
+<div id="export-to-micrsoft-excel" class="section level2" number="7.3">
+<h2 number="7.3"><span class="header-section-number">7.3</span> Export to Micrsoft Excel</h2>
+<p>If we want to export our tibble <code>case_latest</code> to a Microsoft Excel spreadsheet for archiving, we use <code>writexl</code>’s <code>write_xlsx()</code> function. We will name our file <code>case_linelist_latest.xlsx</code>, although it is recommended to save the filename with the date when it was processed, since we are archiving the linelist on daily basis and using them for next day’s processing.</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_xlsx</span>(case_today, <span class="st">&quot;case_linelist_latest.xlsx&quot;</span>)</span></code></pre></div>
+<p><br></p>
+<p>Congratulations on getting to the end! The entire process may be challenging, but the beauty of this approach is that after the script file has been setup, we only need to modify the codes that require manual processing, so the efficiency gains with a data processing workflow in R pays off quickly when we have to process surveillance data on a daily basis.</p>
+<p><br></p>
+<p>Comments welcome on Twitter <a href="https://www.twitter.com/jasonhaw_">@jasonhaw_</a></p>
 </div>
 </div>
 

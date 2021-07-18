@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 <br>
 
-This guide aims to provide step-by-step instructions on how to conduct common data processing tasks for infectious disease surveillance using the open-source programming language R and the integrated development environment (IDE) for R.
+This guide aims to provide step-by-step instructions on how to conduct common data processing tasks for infectious disease surveillance using the open-source programming language R and the integrated development environment (IDE) for R, RStudio.
 
 <br>
 
@@ -245,39 +245,81 @@ Before we begin the actual data processing, we first outline the steps that we a
 
 1. Process new cases from the laboratory linelist.
     a. Identify cases that have updates in the laboratory linelist.
-        i. Create a data frame of ID variable pairs - `LabSpecimenID` from the laboratory linelist and `CaseID` from the case linelist. Store results in data frame `dedup_df`.
+        i. Create a data frame of ID variable pairs - `LabSpecimenID` from the laboratory linelist and `CaseID` from the case linelist. Store results in the data frame `dedup_df`.
         ii. Add names and other information in aid of manual deduplication.
-            1) Store laboratory linelist information in tibble `lab_today_info`.
-            2) Store case linelinse information in tibble `case_yday_info`.
-            3) Merge tibble `lab_today_info` into data frame `dedup_df`. Store results in data frame `dedup_df_info`.
-            4) Merge tibble `case_yday_info` into data frame `dedup_df_info`.
-        iii. Generate similarity scores using Jaro-Winkler (`jw`) distance. Store results in data frame `dedup_df_jw`.
+            1) Store laboratory linelist information in the tibble `lab_today_info`.
+            2) Store case linelist information in the tibble `case_yday_info`.
+            3) Merge the tibble `lab_today_info` into the data frame `dedup_df`. Store results in the data frame `dedup_df_info`.
+            4) Merge the tibble `case_yday_info` into the data frame `dedup_df_info`.
+        iii. Generate similarity scores using Jaro-Winkler (`jw`) distance. Store results in the data frame `dedup_df_jw`.
             1) Keep results with `jw` less than or equal to 0.3.
-        iv. Manually inspect results in data frame `dedup_df_jw`.
-            1) Subset rows that are duplicates from case linelist. These are the rows that we check later on to update the date of existing cases. Store results in data frame `dedup_df_jw_manual`.
+        iv. Manually inspect results in the data frame `dedup_df_jw`.
+            1) Subset rows that are duplicates from case linelist. These are the rows that we check later on to update the date of existing cases. Store results in the data frame `dedup_df_jw_manual`.
     b. Identify new cases within the laboratory linelist.
-        i. Filter positive results from laboratory linelist. Store in tibble `lab_today_pos`.
-        ii. Filter out duplicates already indentified from the data frame `dedup_df_jw_manual` as those cases are not new cases.
-
+        i. Filter positive results from laboratory linelist. Store in the tibble `lab_today_pos`.
+            1) Filter out duplicates already identified from the data frame `dedup_df_jw_manual` as those cases are not new cases. Store the results in the tibble `lab_today_pos_nodup`
+        ii. Create a data frame of ID variable pairs - `LabSpecimenID` from tibble `lab_today_pos_nodup`. Store results in the data frame `dedup_new_df`.
+        iii. Add names and other information in aid of manual deduplication and adjudication.
+          1) Store laboratory linelist information in the tibble `lab_today_pos_nodup_info`.
+          2) Merge the data frame `dedup_new_df` with the tibble `lab_today_pos_nodup_info`. Store results in the data frame `dedup_new_df_info`.
+          3) Merge the data frame `dedup_new_df_info` with the tibble `lab_today_pos_nodup_info`. We do this twice because we paired the `LabSpecimenID` of the tibble `lab_today_pos_nodup` by itself.
+        iii. Generate similarity scores using Jaro-Winkler (`jw`) distance. Store results in the data frame `dedup_new_df_jw`.
+            1) Keep results with `jw` less than or equal to 0.3.
+        iv. Manually inspect results in the data frame `dedup_df_new_jw`.
+            1) Subset rows that are duplicates of one another. These are the rows that we check later on to create a new case linelist. 
+            2) Manually tag a new ID variable to identify duplicate groups. Name the column `DuplicateID`. Store results in the data frame `dedup_df_new_jw_manual`.
+2. Save new case data.
+    a. Filter new cases with no duplication issues. Store results in the tibble `lab_today_pos_nodup_nodup` (we use `nodup` twice to indicate this has been deduplicated twice over).
+    b. Transform the tibble `lab_today_pos_nodup_nodup` into the columns of the tibble `case_yday` so that we may append these new cases to the case linelist later on. Store results in the tibble `case_today`.
+    c. **The tibble `case_today` contains all the new cases processed from the laboratory linelist.** So far, we have the new cases with no issues in deduplication. We will add the deduplicated new cases later on.
+3. Adjudicate on manually deduplicated data.
+    a. Compile new cases, and this time include the new cases with duplicates stored in `dedup_new_df_jw_manual`.
+        i. Implement the adjudication rules and store the results in the tibble `case_today_dedup`.
+        ii. Add the rows of the tibble `case_today_dedup` into the tibble `case_today`. At this point, **we have completed the new cases for addition to the case linelist.**
+    b. Update data of current cases.
+        i. Retrieve the ID pairs from the tibble `dedup_df_jw_manual`. Store results in the tibble `dedup_df_jw_IDpairs`
+        ii. Merge the rest of the information from `lab_today` with `dedup_df_jw_IDpairs`. Store results in the tibble `dedup_df_jw_allinfo`
+        iii. Transform the tibble `dedup_df_jw_allinfo` into the columns of the tibble `case_yday`. Apply the adjudication rules. Store results in the tibble `case_today_newinfo`.
+        iv. Retrieve the rows from the tibble `case_yday` that need updating. Store results in the tibble `case_today_oldinfo`.
+        v. Combine the rows from the tibbles `case_today_newinfo` and `case_today_oldinfo`. Store in a data frame `case_today_recon`. We want to compare the old data from `case_today_oldinfo` with the new data from `case_today_newinfo`.
+        vi. Apply the adjudication rules. Store results in the tibble `case_yday_update`. **The tibble `case_yday_update` contains all the old cases updated with data from the laboratory linelist.**
+3. Compile the latest case linelist.
+    a. From the tibble `case_yday`, filter out the `CaseID` values that are in `case_yday_update`. These are the cases that have no new updates. Store results in the tibble `case_yday_noupdate`. **The tibble `case_yday_noupdate` contains all the old cases with no new updates from the laboratory linelist.**
+    b. Combine the rows from the tibbles `case_today`, `case_yday_update`, and `case_yday_noupdate`. Store results in the tibble called `case_latest`. **The tibble `case_latest` contains the latest case linelist.**
+    c. Check date inconsistencies, e.g. date of symptom onset should not be after date of specimen collection of first positive test according to our hypothetical testing policy. Replace date of symptom onset with the date of specimen collection of first positive test if that is the case.
+    d. Export the `case_latest` linelist into Microsoft Excel spreadsheet format.
+    e. Tomorrow, the process repeats again and today's tibble `case_latest` becomes tomorrow's tibble `case_yday`.
+    
 
 ## Overview of functions
 
 The following functions are used from the following packages:
 
 1. Base R
+  + `colnames()`: Names columns in a data frame
   + `expand.grid()`: Creates a data frame from all combinations of two vectors
+  + `max()`: Takes the maximum value of a vector; `min()` takes the minimum
   + `merge()`: Merges two data frames by common columns
+  + `nchar()`: Calculates the number of characters in a string value
+  + `rbind()`: Combines rows of two data frames, must have the same columns; `cbind()` combines columns, must have the same rows
+  + `which.max()`: Takes the row index of the maximum value of the vector
 2. `tidyverse` (specifically, `dplyr`)
   + `arrange()`: Sorts data frame based on specified column
+  + `case_when()`: Vectorizes if/else statements. For those familiar with SQL, this is similar to the `CASE WHEN` statement.
   + `filter()`: Filters rows based on certain conditions
+  + `group_by()`: Groups rows based on a values of the specified variable
   + `relocate()`: Arranges columns in a data frame
+  + `rename()`: Renames column names (syntax: `newname` = `oldname`)
   + `select()`: Selects columns in a data frame
+  + `summarize()`: Summarizes data across specified columns, often used together with `group_by()`
   + We also learn two operators:
     + The pipe `%>%` operator, which "pipes" arguments in a function to make code more readable
     + The `%in%` operator, which makes filtering values easier
 3. `readxl`
-  + `read_xlsx`: Imports Micrsoft Excel spreadsheet files in `.xlsx` format
-4. `tidystringdist`
+  + `read_xlsx()`: Imports Microsoft Excel spreadsheet files in `.xlsx` format
+4. `writexl`
+  + `write_xlsx()`: Exports a data frame to a Microsoft Excel Spreadsheet in `xlsx.` format
+5. `tidystringdist`
   + `tidy_stringdist()`: Generates similarity scores between two string values`
 
 
@@ -403,7 +445,7 @@ We first filter only positive results from the laboratory linelist (`lab_today`)
 lab_today_pos <- lab_today %>% filter(Result == "Positive")
 ```
 
-Then, we filter out the duplicates that we have identified from `dedup_df_jw_manual`. We use the `filter()` function with the `%in%` operator. The `%in%` operator works like this: If the code is written as `X %in% Y`, then this means that we filter `X` based on the values in `Y`. In our case, `X` is the `LabSpecimenID` and `Y` is `dedup_df_jw_manual$lab_today_id`. Since we need the values that are **NOT** in `Y`, we need to enclose the entire expression with `!()` which gives us the opposite of what we need to filter. We save the filtered data in a tibble called `lab_today_pos_nodup`
+Then, we filter out the duplicates that we have identified from `dedup_df_jw_manual`. We use `dplyr`'s `filter()` function with the `%in%` operator. The `%in%` operator works like this: If the code is written as `X %in% Y`, then this means that we filter `X` based on the values in `Y`. In our case, `X` is the `LabSpecimenID` and `Y` is `dedup_df_jw_manual$lab_today_id`. Since we need the values that are **NOT** in `Y`, we need to enclose the entire expression with `!()` which gives us the opposite of what we need to filter. We save the filtered data in a tibble called `lab_today_pos_nodup`.
 
 ```{r filter_positivies_nodup, warning = FALSE, message = FALSE}
 # !() means we want the opposite result of the filter expression
@@ -420,9 +462,9 @@ Taking a look at the resulting tibble (`View(lab_today_pos_nodup)`):
 knitr::kable(lab_today_pos_nodup, row.names = TRUE) %>% kable_styling(font_size = 12)
 ```
 
-This is the tibble that contains new cases, but has not yet been deduplicated. For example, rows 2 and 3, 4 and 5, and 6 and 7 are potentially duplicates. Notice how Penelope Fields is in this tibble because we have determined beforehand that the Penelope F. Fields in the case linelist is not the same Penelope Fields.
+This is the tibble that contains new cases, but have not yet been deduplicated. For example, rows 2 and 3, 4 and 5, and 6 and 7 are potentially duplicates. Notice how Penelope Fields is in this tibble because we have determined beforehand that the Penelope F. Fields in the case linelist is not the same Penelope Fields.
 
-### Setting up the deduplication pairs
+### Creating a data frame of ID variable pairs
 We now create a tibble (`dedup_new_df`) of `LabspecimenID` in the tibble `lab_today_pos_nodup` paired with all other `LabSpecimenID` in the same tibble. We use the `expand.grid()` function again. To save some space, we automatically delete the pairs that are equal to one another using the `filter()` function.
 
 ```{r dedup_new_df, warning = FALSE, message = FALSE}
@@ -439,9 +481,9 @@ dedup_new_df <- dedup_new_df %>% filter(!(LabSpecimenID1 == LabSpecimenID2))
 ```
 
 ### Add names and other information for deduplication and adjudication
-We now add more information to the names to aid us in decision making on whether or not the pairs are duplicates, and to decide which among the duplicates do we retain. We use age, sex, and municipality, date of symptom onset, date of specimen collection. and date of result released to make that decision. We also add the `CaseID` variable. We store the filtered columns in the tibble `lab_today_pos_nodup_info`.
+We now add more information to the names to aid us in decision making on whether or not the pairs are duplicates, and to decide which among the duplicates do we retain. We use `Age`, `Sex`, `Municipality`, `DateOnset`, `DateSpecimenCollection`, and     `DateResultReleased` to make that decision. We also add the `CaseID` variable. We store the filtered columns in the tibble `lab_today_pos_nodup_info`.
 
-```{r dedup_prep, warning = FALSE, message = FALSE}
+```{r lab_today_pos_nodup_info, warning = FALSE, message = FALSE}
 # Select columns in aid of manual deduplication
 lab_today_pos_nodup_info <- lab_today_pos_nodup %>% 
   select(LabSpecimenID, CaseID, Name, Age, Sex, Municipality, 
@@ -463,10 +505,10 @@ dedup_new_df_info <- merge(x = dedup_new_df_info, y = lab_today_pos_nodup_info,
 dedup_new_df_info <- dedup_new_df_info %>% relocate(LabSpecimenID2, .before = CaseID.y)
 ```
 
-### Generate similariity scores
+### Generate similarity scores
 We now run the `tidy_stringdist()` function to generate similarity scores of all our pairwsise names. We use the `jw` method and retain scores 0.3 and below for further inspection. We store the results in a new data frame called `dedup_new_df_jw`. We also sort the results by `jw` and `Name.x` (the first name column) in aid of manual inspection.
 
-```{r jw2, warning = FALSE, message = FALSE}
+```{r dedup_new_df_jw, warning = FALSE, message = FALSE}
 # Use Jaro-Winkler distance to generate similarity scores
 # v1 and v2 are the column of names
 dedup_new_df_jw <- tidy_stringdist(dedup_new_df_info, v1 = "Name.x", 
@@ -489,7 +531,7 @@ knitr::kable(dedup_new_df_jw, row.names = TRUE) %>% kable_styling(font_size = 12
 
 There are no rows to exclude as all the rows are duplicates of one another. Rows 1 and 2, 3 and 4, and 5 and 6 are duplicates of one another. We save the results in a new data frame `dedup_new_df_jw_manual`. We add a new column called `DuplicateID` which manually tag rows as duplicates of one another.
 
-```{r duptag, warning = FALSE, message = FALSE}
+```{r dedup_new_df_jw_manual, warning = FALSE, message = FALSE}
 # No rows to exclude, so save everything
 dedup_new_df_jw_manual <- dedup_new_df_jw
 
@@ -527,7 +569,7 @@ Now we transform the tibble `lab_today_pos_nodup_nodup` into the columns of the 
 
 Because the columns of `lab_today_pos_nodup_nodup` are mapped 1:1 to `case_yday`, we can first duplicate the tibble `lab_today_pos_nodup_nodup` as a new tibble called `case_today` and rename/remove/add blank columns from `case_today` to resemble `case_yday`. We rename columns using `dplyr`'s `rename()` function (syntax: `newname` = `oldname`). We remove columns using `dplyr`'s `select()` function and enclose the column names to delete using `-()`. We add blank date columns by simply creating them and assigning them `NA` values and declaring their class using `as.POSIXct()` for dates.
 
-```{r feedinitial, warning = FALSE, message = FALSE}
+```{r case_today, warning = FALSE, message = FALSE}
 # Duplicate lab_today_pos_nodup_nodup
 case_today <- lab_today_pos_nodup_nodup
 
@@ -572,7 +614,7 @@ Because we tagged the duplicates manually, we would have to select the values we
 
 We use `dplyr`'s `group_by()` function to tell R that we plan to adjudicate by `DuplicateID`. Then, we use the `dplyr`'s `summarize()` function to define our columns according to `case_today` as we append them later, as well as implement the adjudication rules. We use the base R functions `min()` and `max()` for the ones where we need to identify the minimum and maximum values. For `DateOnset`, we also have to specify that we have to exclude `NA` from deciding which is the minimum value. For `Name`, we use the base R function `which.max()` to identify the row number of the longest number of characters, and we use the base R function `nchar()` to calculate the number of characters. We then save our result in the tibble `case_today_dedup`:
 
-```{r dupclean, warning = FALSE, message = FALSE}
+```{r case_today_dedup, warning = FALSE, message = FALSE}
 # Use all the .x-suffixed columns
 # Adjudication rules
 # * For `CaseID`, the lower number is kept.
@@ -599,7 +641,7 @@ case_today_dedup <- case_today_dedup %>% select(-(DuplicateID))
 
 Then, we append the cases from `case_today_dedup` into `case_today` and **we finally have a clean linelist of cases today** - deduplicated and adjudicated. We use the base R function `rbind()` to do this.
 
-```{r putthem, warning = FALSE, message = FALSE}
+```{r case_today_rbind, warning = FALSE, message = FALSE}
 # Bind the rows together of case_today and case_today_dedup
 case_today <- rbind(case_today, case_today_dedup)
 ```
@@ -613,11 +655,11 @@ knitr::kable(case_today, row.names = TRUE) %>% kable_styling(font_size = 12)
 ## Updating current cases
 
 ### Retrieving ID pairs
-We first retrieve the `LabSpecimenID` and `CaseID` pairs from the data frame `dedup_df_jw`. In that data frame, these correspond to the columns `lab_today_id` and `case_yday_id`. We store the ID pairs in a data frame called `dedup_df_jw_IDpairs`
+We first retrieve the `LabSpecimenID` and `CaseID` pairs from the data frame `dedup_df_jw_manual`. In that data frame, these correspond to the columns `lab_today_id` and `case_yday_id`. We store the ID pairs in a data frame called `dedup_df_jw_IDpairs`
 
-```{r retrievepairs, warning = FALSE, message = TRUE}
+```{r dedup_df_jw_IDpairs, warning = FALSE, message = TRUE}
 # Retrieve ID pairs
-dedup_df_jw_IDpairs <- dedup_df_jw %>% select(lab_today_id, case_yday_id)
+dedup_df_jw_IDpairs <- dedup_df_jw_manual %>% select(lab_today_id, case_yday_id)
 ```
 
 ### Merging with the rest of the information
@@ -758,3 +800,19 @@ case_latest <- case_latest %>%
 ```{r showresult10, echo = FALSE, warning = FALSE, message = FALSE}
 knitr::kable(case_latest, row.names = TRUE) %>% kable_styling(font_size = 12)
 ```
+
+## Export to Micrsoft Excel
+
+If we want to export our tibble `case_latest` to a Microsoft Excel spreadsheet for archiving, we use `writexl`'s `write_xlsx()` function. We will name our file `case_linelist_latest.xlsx`, although it is recommended to save the filename with the date when it was processed, since we are archiving the linelist on daily basis and using them for next day's processing.
+
+```{r exportxlsx, warning = FALSE, message = FALSE}
+write_xlsx(case_today, "case_linelist_latest.xlsx")
+```
+
+<br>
+
+Congratulations on getting to the end! The entire process may be challenging, but the beauty of this approach is that after the script file has been setup, we only need to modify the codes that require manual processing, so the efficiency gains with a data processing workflow in R pays off quickly when we have to process surveillance data on a daily basis.
+
+<br>
+
+**Comments welcome on Twitter: [\@jasonhaw_](https://www.twitter.com/jasonhaw_)**
