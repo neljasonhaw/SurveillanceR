@@ -5,6 +5,7 @@ date: "Last updated July 16, 2021"
 output:
   rmdformats::robobook:
       number_sections: yes
+      highlight: haddock
 ---
 
 ```{r setup, include = FALSE}
@@ -29,24 +30,24 @@ This guide is primarily targeted towards field epidemiologists who...
 ## Getting started with R
 * We need to first install [R](https://cran.r-project.org/bin/windows/base/) and [RStudio](https://www.rstudio.com/products/rstudio/download/#download). Both are free and open source tools. We must install R first, then RStudio. [TechVidVan has provided a great starter guide on installing R and RStudio](https://techvidvan.com/tutorials/install-r/).
 * Most of R's capabilities come in the form of **PACKAGES**. Packages are created by a vibrant community of R programmers, many of whom are epidemiologists. [DataCamp has an FAQ guide on what R packages are](https://www.datacamp.com/community/tutorials/r-packages-guide).
-* Open RStudio for the first time may are overwhelming. [Antoine Soetewey’s Stats and R blog has a beginner-level introduction to the RStudio interface](https://statsandr.com/blog/how-to-install-r-and-rstudio/#the-main-components-of-rstudio).
+* Open RStudio for the first time may be overwhelming. [Antoine Soetewey’s Stats and R blog has a beginner-level introduction to the RStudio interface](https://statsandr.com/blog/how-to-install-r-and-rstudio/#the-main-components-of-rstudio).
 * [Finally, Harvard Chan Bioinformatic Core (HBC) has an excellent 1.5 day tutorial on the basics of R](https://hbctraining.github.io/Intro-to-R-flipped/schedules/links-to-lessons.html)
 * There are also excellent Coursera courses from Johns Hopkins University on getting familiar with R: [R Programming](https://www.coursera.org/learn/r-programming) and [Introduction to Tidyverse](https://www.coursera.org/learn/tidyverse/).
 
 ## Tidy data principles
-Often, the data we have as part of epidemiologic surveillance may not be the version ready for any type of statistical analysis. This raw data MUST are processed into tidy data. At the basic level:
+Often, the data we have as part of epidemiologic surveillance may not be the version ready for any type of statistical analysis. This raw data MUST be processed into tidy data. At the basic level:
 
 * Each row = one observation representing the unit of analysis
 * Each column = one variable
 * Each cell = standard data format, usually defined by a coding manual
-* If there are going to are multiple tables, there should are an identifying (ID) variable linking tables together.
+* If there are going to be multiple tables, there should be an identifying (ID) variable linking tables together.
 
 Tidy data **must not have**:
 
 * Any blanks, unless these are true missing data
 * Too many special characters, unless absolutely necessary
-* Merged cells ANYWHERE - merged cells may are good visually but not for analysis
-* Colors to identify variables - these must are defined as a new column (variable), as colors cannot are read into analysis
+* Merged cells ANYWHERE - merged cells may be good visually but not for analysis
+* Colors to identify variables - these must be defined as a new column (variable), as colors cannot are read into analysis
 
 For example, say we have five COVID-19 confirmed cases, and our raw data looks something like this on a spreadsheet:
 
@@ -83,7 +84,7 @@ The second table (each row = test)
 | 4    | 2020-10-03 | Negative |
 | 5    | 2020-10-01 | Positive |
 
-Additionally, there should are some sort of coding manual. For example:
+Additionally, there should be some sort of coding manual. For example:
 
 * `ID`: Unique ID assigned to each confirmed case (when a case has been assigned two ID numbers, discard the latest ID number and move on - DO NOT shift ID numbers upward)
 * `DateOnset`: Date of symptom onset as reported by the patient (format: YYYY-MM-DD)
@@ -93,7 +94,7 @@ Additionally, there should are some sort of coding manual. For example:
 * `DateTest`: Date when case was swabbed for confirmatory testing (format: YYYY-MM-DD)
 * `Result`: Result of test conducted (Positive, Negative, Equivocal, Invalid)
 
-We may prepare the tidy data using a spreadsheet program like Microsoft Excel, which may are familiar to most people. But we do not recommend this as we want our data processing to are **reproducible**. We want every modification of our data accounted for, and we want our rules on data processing to are clear that anyone else looking at the data may are able to follow along.
+We may prepare the tidy data using a spreadsheet program like Microsoft Excel, which may be familiar to most people. But we do not recommend this as we want our data processing to be **reproducible**. We want every modification of our data accounted for, and we want our rules on data processing to be clear that anyone else looking at the data may be able to follow along.
 
 To learn more about tidy data, refer to the following reference by Hadley Wickham [(Paper)](http://vita.had.co.nz/papers/tidy-data.pdf) [(Video)](http://vimeo.com/33727555).
 
@@ -104,10 +105,10 @@ In this guide, we will learn to use the following functions:
 
 1. Base R
   + `colnames()`: Names columns in a data frame
-  + `head()`: Show the first six rows of a data frame
+  + `head()`: Shows the first six rows of a data frame
   + `expand.grid()`: Creates a data frame from all combinations of two vectors
   + `install.packages()`: Downloads packages from the Comprehensive R Acrhive Network (CRAN)
-  + `library()`: Load packages in current environment
+  + `library()`: Loads packages in current environment
   + `max()`: Takes the maximum value of a vector; `min()` takes the minimum
   + `merge()`: Merges two data frames by common columns
   + `nchar()`: Calculates the number of characters in a string value
@@ -129,9 +130,9 @@ In this guide, we will learn to use the following functions:
 3. `readxl`
   + `read_xlsx()`: Imports Microsoft Excel spreadsheet files in `.xlsx` format
 4. `writexl`
-  + `write_xlsx()`: Exports a data frame to a Microsoft Excel Spreadsheet in `xlsx.` format
+  + `write_xlsx()`: Exports a data frame in Microsoft Excel Spreadsheet `.xlsx` format
 5. `tidystringdist`
-  + `tidy_stringdist()`: Generates similarity scores between two string values`
+  + `tidy_stringdist()`: Generates similarity scores between two string values
 
 
 
@@ -140,7 +141,7 @@ In this guide, we will learn to use the following functions:
 
 We assume that we are working on surveillance on a new infectious disease. There is one reference laboratory that conducts confirmatory testing for this infectious disease, and we define confirmed cases as those who test positive with the confirmatory test. We only test suspect cases, defined as those with symptoms relevant to this infectious disease, which means we expect that everyone who has been tested has a date of symptom onset, although we typically expect that this field is blank more often than not.
 
-We test suspect cases regularly, sometimes twice within a 24-hour window. We are interested in both the first positive test result and the first negative test result after that, as we define clinical recovery as the day that a case has received a negative test result. For simplicity, we deal with only positive or negative test results, although in practice we expect test results to are inconclusive/equivocal or samples collected to are invalid for testing.
+We test suspect cases regularly, sometimes twice within a 24-hour window. We are interested in both the first positive test result and the first negative test result after that, as we define clinical recovery as the day that a case has received a negative test result. For simplicity, we deal with only positive or negative test results, although in practice we expect test results to be inconclusive/equivocal or samples collected to be invalid for testing.
 
 The reference laboratory has an information system, and everyday, the reference laboratory provides us with a **laboratory linelist** containing test results within the past 24 hours. The reference laboratory exports the file as a Microsoft Excel spreadsheet (`.xlsx`). Everyday, we process the laboratory linelist from the past 24 hours and all the cases since the beginning of the surveillance activity into the **case linelist**. We repeat this process everyday.
 
@@ -164,7 +165,7 @@ The variables in the laboratory linelist are as follows:
 * `DateOnset`: Reported date of onset of symptoms relevant to the infectious disease
 * `Result`: Positive or negative
 
-When we conduct data processing, it is important that we set up clear **adjudication** or validation rules. Most of the time, the adjudication comes outside of data processing. For example, we may instruct the reporting health facility to reencode the laboratory result in the information system. We may also review other health records and replace values manually in the information system. If we need to make modifications during data processing, we must are clear about the **adjudication rules**. We work with a fairly simple set of rules to demonstrate this point.
+When we conduct data processing, it is important that we set up clear **adjudication** or validation rules. Most of the time, the adjudication comes outside of data processing. For example, we may instruct the reporting health facility to reencode the laboratory result in the information system. We may also review other health records and replace values manually in the information system. If we need to make modifications during data processing, we must be clear about the **adjudication rules**. We work with a fairly simple set of rules to demonstrate this point.
 
 The variables in the case linelist, as well as the adjudication rules are as follows:
 
@@ -175,11 +176,11 @@ The variables in the case linelist, as well as the adjudication rules are as fol
   + If there are conflicts in the values on any of these variables, then we need to review other health records or recheck with the reporting health facility.
   + In this example, we work with discrepancies in the `Name` value. The name with the most complete information is retained. For example, if one value has the middle name and the other does not, then the one with the middle name is retained.
 * The dates of specimen collection and result released are set up differently from the laboratory linelist. Specifically, in this case, we are primarily concerned with the first positive results (`DateSpecimenCollection_PositiveFirst` and `DateResultReleased_PositiveFirst`) and first negative result after that (`DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst`).
-    + This means that not all laboratory results from the same person are going to are used in this linelist of cases. There will be some loss of information.
+    + This means that not all laboratory results from the same person are going to be used in this linelist of cases. There will be some loss of information.
     + This means that we have to restructure the values from the `DateSpecimenCollection`, `DateResultReleased`, and `Result` from the laboratory linelist to fit the columns in the case linelist.
 * The date of symptom onset `DateOnset` is also carried over from the laboratory linelist, unless there are discrepancies with the values from a more recent laboratory result entry. 
   + For this example, our rule is that we keep the earliest recorded date of symptom onset, e.g. if the original date of symptom onset recorded was July 1, 2021, but the latest laboratory result recorded it as July 3, 2021, then we keep July 1, 2021.
-  + We also check whether the date of symptom onset is on or before the date of specimen collection, as our hypothetical testing policy states that only symptomatic cases are going to are tested. If the date of symptom onset is after the date of specimen collection, then we replace the date of symptom onset with the date of specimen collection.
+  + We also check whether the date of symptom onset is on or before the date of specimen collection, as our hypothetical testing policy states that only symptomatic cases are going to be tested. If the date of symptom onset is after the date of specimen collection, then we replace the date of symptom onset with the date of specimen collection.
 + `DateReport`: This is the date when the case was added to the case linelist. We want to keep track of which cases were reported on which day, especially when we need to report the number of new cases to be reported for the day.
 
 <br>
@@ -204,7 +205,7 @@ All of the other files are not relevant for the guide or are output files that a
 2. The `New Project Wizard` dialog box opens. Select `Existing Directory`.
 3. Under `Project working directory`, select `Browse...` and locate the folder of the working directory.
 4. Select `Create Project`. At this point, we have created a new project file (.Rproj) as well as set the working directory.
-5. Create a new R script file using the keyboard shortcut `Ctrl-Shift-N` or going to `File` > `New File` > `R Script` or clicking on the `New File` button on the topmost left corner right below the menu bar then clicking `R Script`. The left side of the environment should split into two - with the script file found on the upper left side. The script file is similar to a do file for those who are familiar with Stata. Ideally, we should are saving all our code in a script file in case we need to redo or repeat analyses so that all we have to do is to run the script rather than coding everything from scratch again.
+5. Create a new R script file using the keyboard shortcut `Ctrl-Shift-N` or going to `File` > `New File` > `R Script` or clicking on the `New File` button on the topmost left corner right below the menu bar then clicking `R Script`. The left side of the environment should split into two - with the script file found on the upper left side. The script file is similar to a do file for those who are familiar with Stata. Ideally, we should be saving all our code in a script file in case we need to redo or repeat analyses so that all we have to do is to run the script rather than coding everything from scratch again.
 6. Save the script file every now and then. Give it a name. In the repository, this is named `DataProcessing.R`. Open that script file if we just want to run the code.
 
 Alternatively, if we are familiar with setting up Git on RStudio, we may also set up the RStudio project by cloning the repository instead of downloading the ZIP file.
@@ -309,7 +310,7 @@ str(sampledate)       # Read as calendar date and time
 
 Before we begin the actual data processing, we first outline the steps that we are taking.
 
-1. Process new cases from the laboratory linelist.+
+1. Process new cases from the laboratory linelist.
     a. Identify cases that have updates in the laboratory linelist.
         i. Create a data frame of ID variable pairs - `LabSpecimenID` from the laboratory linelist and `CaseID` from the case linelist. Store results in the data frame `dedup_df`.
         ii. Add names and other information from the tibble `lab_today` in aid of manual deduplication.
@@ -318,9 +319,9 @@ Before we begin the actual data processing, we first outline the steps that we a
             3) Merge the tibble `lab_today_info` into the data frame `dedup_df`. Store results in the data frame `dedup_df_info`.
             4) Merge the tibble `case_yday_info` into the data frame `dedup_df_info`.
         iii. Generate similarity scores using Jaro-Winkler (`jw`) distance. Store results in the data frame `dedup_df_jw`.
-            1) Keep results with `jw` less than or equal to 0.3.
+            1) Keep results with `jw` less than or equal to 0.3. This is just one way to generate the fuzzy matching algorithm.
         iv. Manually inspect results in the data frame `dedup_df_jw`.
-            1) Subset rows that are duplicates from case linelist. These are the rows that we check later on to update the date of existing cases. Store results in the data frame `dedup_df_jw_manual`.
+            1) Subset rows that are duplicates from case linelist. These are the rows that we check later on to update the data of existing cases. Store results in the data frame `dedup_df_jw_manual`.
     b. Identify new cases within the laboratory linelist.
         i. Filter positive results from laboratory linelist. Store in the tibble `lab_today_pos`.
             1) Filter out duplicates already identified from the data frame `dedup_df_jw_manual` as those cases are not new cases. Store the results in the tibble `lab_today_pos_nodup`
@@ -462,7 +463,7 @@ grViz(diagram = "digraph flowchart {
 
 <br>
 
-# Processing New Cases from Laboratory Linelist
+# Processing New Cases from the Laboratory Linelist
 
 We now deduplicate new cases from the lab linelist. We need to conduct two deduplication activities:
 
@@ -540,7 +541,7 @@ dedup_df_info <- dedup_df_info %>% relocate(case_yday_id, .before = Name.y)
 ```
 
 ### Generating similarity scores
-We now run `tidystringdist`'s `tidy_stringdist()` function to generate similarity scores of all our pairwise names. We may read more about the different methods under this command by reading the documentation (Type `?tidy_stringdist-metrics` on the Console). If we do not specify the method, the command generates a score using all available methods (which can are time-consuming), so in this example, we just use one - the Jaro-Winkler distance (`jw`), which provides similarity scores on a scale of 0 to 1, where 0 is an exact match (the lower the score, the likelier it is a duplicate). We store the results in the data frame `dedup_df_jw` and retain pairs with a score of 0.3 and below for further inspection using `dplyr`'s `filter()` function, then sort by `jw` using `dplyr`'s `arrange()` function. Feel free to experiment with what method and cutoff works.
+We now run `tidystringdist`'s `tidy_stringdist()` function to generate similarity scores of all our pairwise names. We may read more about the different methods under this command by reading the documentation (Type `?tidy_stringdist-metrics` on the Console). If we do not specify the method, the command generates a score using all available methods (which can be time-consuming), so in this example, we just use one - the Jaro-Winkler distance (`jw`), which provides similarity scores on a scale of 0 to 1, where 0 is an exact match (the lower the score, the likelier it is a duplicate). We store the results in the data frame `dedup_df_jw` and retain pairs with a score of 0.3 and below for further inspection using `dplyr`'s `filter()` function, then sort by `jw` using `dplyr`'s `arrange()` function. Feel free to experiment with what method and cutoff works.
 
 ```{r dedup_df_jw, warning = FALSE, message = FALSE}
 #### Generate similarity scores
@@ -854,7 +855,7 @@ dedup_df_jw_allinfo <- merge(x = dedup_df_jw_IDpairs, y = lab_today,
 Now we transform the the data frame `dedup_df_jw_allinfo` into the columns of the tibble `case_yday` so that it are easier for us to update case information. We store the new tibble as `case_yday_newinfo`. 
 
 * We carry over the values of `CaseID`, `Name`, `Age`, `Sex`, `Municipality`, and `DateOnset`
-* The values in `DateSpecimenCollection` and `DateResultReleased` are assigned to `DateSpecimenCollection_PositiveFirst` and `DateResultReleased_PositiveFirst` if the result is positive, and `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` if the result is negative. We use the `dplyr`'s `mutate()` and `case_when()` functions for this. Note that the pipe operator (`%>%`) can are used to execute multiple instructions at once.
+* The values in `DateSpecimenCollection` and `DateResultReleased` are assigned to `DateSpecimenCollection_PositiveFirst` and `DateResultReleased_PositiveFirst` if the result is positive, and `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` if the result is negative. We use the `dplyr`'s `mutate()` and `case_when()` functions for this. Note that the pipe operator (`%>%`) can be used to execute multiple instructions at once.
 * We then remove the columns `lab_today_id`, `CaseID`, `DateSpecimenCollection`, `DateResultReleased` and `Result` since we not need them anymore after this. `CaseID` in this data frame pertain to the autogenerated `CaseID` from the laboratory linelist. We need the column `case_yday_id` because that is the ID variable that allow us to link them to the tibble `case_yday`. then we rename `case_yday_id` to `CaseID`. 
 
 ```{r case_yday_newinfo, warning = FALSE, message = FALSE}

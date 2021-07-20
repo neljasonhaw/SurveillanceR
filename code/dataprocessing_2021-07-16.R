@@ -45,10 +45,10 @@ library(tidystringdist)   # For fuzzy matching
 ####### IMPORTING THE DUMMY DATA ####### 
 
 #### Import dummy laboratory linelist
-lab_today <- read_xlsx("../labs/fakelablinelist_2021-07-16.xlsx")
+lab_today <- read_xlsx("../SurveillanceR/labs/fakelablinelist_2021-07-16.xlsx")
 
 #### Import dummy case linelist
-case_yday <- read_xlsx("../cases/fakecaselinelist_2021-07-15.xlsx")
+case_yday <- read_xlsx("../SurveillanceR/cases/fakecaselinelist_2021-07-15.xlsx")
 
 ##############################################################################
 ##############################################################################
@@ -389,7 +389,7 @@ case_latest <- case_latest %>%
 ##############################################################################
 
 # Export to Excel
-write_xlsx(case_today, "../cases/fakecaselinelist_2021-07-16.xlsx")
+write_xlsx(case_today, "../SurveillanceR/cases/fakecaselinelist_2021-07-16.xlsx")
 
 ##############################################################################
 ##############################################################################
