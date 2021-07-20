@@ -1,0 +1,1009 @@
+---
+title: "Epidemiologic Surveillance Data Processing"
+author: "Created by Nel Jason Haw"
+date: "Last updated July 16, 2021"
+output:
+  rmdformats::robobook:
+      number_sections: yes
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<br>
+
+This guide aims to provide step-by-step instructions on how to conduct common data processing tasks for infectious disease surveillance using the open-source programming language R and the integrated development environment (IDE) for R, RStudio.
+
+<br>
+
+# The Basics
+
+## For whom is this guide?
+This guide is primarily targeted towards field epidemiologists who...
+
+* Do not have access to proprietary statistical software such as SAS and Stata
+* Do not have any solid background in any statistical programming language
+* Work collaboratively as part of routine infectious disease surveillance
+
+## Getting started with R
+* We need to first install [R](https://cran.r-project.org/bin/windows/base/) and [RStudio](https://www.rstudio.com/products/rstudio/download/#download). Both are free and open source tools. We must install R first, then RStudio. [TechVidVan has provided a great starter guide on installing R and RStudio](https://techvidvan.com/tutorials/install-r/).
+* Most of R's capabilities come in the form of **PACKAGES**. Packages are created by a vibrant community of R programmers, many of whom are epidemiologists. [DataCamp has an FAQ guide on what R packages are](https://www.datacamp.com/community/tutorials/r-packages-guide).
+* Open RStudio for the first time may are overwhelming. [Antoine Soetewey’s Stats and R blog has a beginner-level introduction to the RStudio interface](https://statsandr.com/blog/how-to-install-r-and-rstudio/#the-main-components-of-rstudio).
+* [Finally, Harvard Chan Bioinformatic Core (HBC) has an excellent 1.5 day tutorial on the basics of R](https://hbctraining.github.io/Intro-to-R-flipped/schedules/links-to-lessons.html)
+* There are also excellent Coursera courses from Johns Hopkins University on getting familiar with R: [R Programming](https://www.coursera.org/learn/r-programming) and [Introduction to Tidyverse](https://www.coursera.org/learn/tidyverse/).
+
+## Tidy data principles
+Often, the data we have as part of epidemiologic surveillance may not be the version ready for any type of statistical analysis. This raw data MUST are processed into tidy data. At the basic level:
+
+* Each row = one observation representing the unit of analysis
+* Each column = one variable
+* Each cell = standard data format, usually defined by a coding manual
+* If there are going to are multiple tables, there should are an identifying (ID) variable linking tables together.
+
+Tidy data **must not have**:
+
+* Any blanks, unless these are true missing data
+* Too many special characters, unless absolutely necessary
+* Merged cells ANYWHERE - merged cells may are good visually but not for analysis
+* Colors to identify variables - these must are defined as a new column (variable), as colors cannot are read into analysis
+
+For example, say we have five COVID-19 confirmed cases, and our raw data looks something like this on a spreadsheet:
+
+![Raw data from surveillance example](https://i.ibb.co/xMHy3T9/RawData.png)
+
+This raw data file:
+
+* Does not have a standard format for the cells - the dates are all encoded inconsistently
+* Has merged cells horizontally and vertically
+* "Flattens" the tests together with the cases
+* Has colored cells but no explanation - in this case, the yellow ones were the latest reported cases (in this hypothetical case, it is Oct 2) and the rest of the rows have no indication of when they were reported
+
+We should split the data into two tables: one where each row is a case, another where each row is a test. The two tables are linked by a common, static ID. A tidy data version of the file above could look something like this instead:
+
+The first table (each row = confirmed case)
+
+| ID   | DateOnset  | Municipality | Community      | DateReport |
+| ---: | ----------:| :----------- | :------------- | ----------:|
+| 1    | 2020-09-27 | Funky Town   | Highland Z     | 2020-10-01 |
+| 2    | 2020-09-26 | Funky Town   | Highland Y     | 2020-10-01 |
+| 3    | 2020-09-28 | Providence   | People Village | 2020-10-02 |
+| 4    | 2020-09-25 | Border Town  | Crescent Hill  | 2020-09-30 |
+| 5    | 2020-09-30 | New Horizons | Block A1       | 2020-10-02 |
+
+The second table (each row = test)
+
+| ID   | DateTest   | Result   |
+| ---: | ---:       | :---     |
+| 1    | 2020-09-30 | Positive |
+| 2    | 2020-09-30 | Positive |
+| 2    | 2020-10-02 | Positive |
+| 3    | 2020-10-01 | Positive |
+| 4    | 2020-09-29 | Positive |
+| 4    | 2020-10-03 | Negative |
+| 5    | 2020-10-01 | Positive |
+
+Additionally, there should are some sort of coding manual. For example:
+
+* `ID`: Unique ID assigned to each confirmed case (when a case has been assigned two ID numbers, discard the latest ID number and move on - DO NOT shift ID numbers upward)
+* `DateOnset`: Date of symptom onset as reported by the patient (format: YYYY-MM-DD)
+* `Municipality`: Municipality indicated in the current address reported by the patient (Names according to official geographic listing of national statistical authority)
+* `Community`: Community indicated in the current address reported by the patient (Names according to official geographic listing of national statistical authority)
+* `DateReport`: Date when case was officially reported to the surveillance system (format: YYYY-MM-DD)
+* `DateTest`: Date when case was swabbed for confirmatory testing (format: YYYY-MM-DD)
+* `Result`: Result of test conducted (Positive, Negative, Equivocal, Invalid)
+
+We may prepare the tidy data using a spreadsheet program like Microsoft Excel, which may are familiar to most people. But we do not recommend this as we want our data processing to are **reproducible**. We want every modification of our data accounted for, and we want our rules on data processing to are clear that anyone else looking at the data may are able to follow along.
+
+To learn more about tidy data, refer to the following reference by Hadley Wickham [(Paper)](http://vita.had.co.nz/papers/tidy-data.pdf) [(Video)](http://vimeo.com/33727555).
+
+
+## Overview of functions
+
+In this guide, we will learn to use the following functions:
+
+1. Base R
+  + `colnames()`: Names columns in a data frame
+  + `head()`: Show the first six rows of a data frame
+  + `expand.grid()`: Creates a data frame from all combinations of two vectors
+  + `install.packages()`: Downloads packages from the Comprehensive R Acrhive Network (CRAN)
+  + `library()`: Load packages in current environment
+  + `max()`: Takes the maximum value of a vector; `min()` takes the minimum
+  + `merge()`: Merges two data frames by common columns
+  + `nchar()`: Calculates the number of characters in a string value
+  + `str()`: Displays the structure of any object
+  + `rbind()`: Combines rows of two data frames, must have the same columns; `cbind()` combines columns, must have the same rows
+  + `which.max()`: Takes the row index of the maximum value of the vector
+2. `tidyverse` (specifically, `dplyr`)
+  + `arrange()`: Sorts data frame based on specified column
+  + `case_when()`: Vectorizes if/else statements. For those familiar with SQL, this is similar to the `CASE WHEN` statement.
+  + `filter()`: Filters rows based on certain conditions
+  + `group_by()`: Groups rows based on a values of the specified variable
+  + `relocate()`: Arranges columns in a data frame
+  + `rename()`: Renames column names (syntax: `newname` = `oldname`)
+  + `select()`: Selects columns in a data frame
+  + `summarize()`: Summarizes data across specified columns, often used together with `group_by()`
+  + We also learn two operators:
+    + The pipe `%>%` operator, which "pipes" arguments in a function to make code more readable
+    + The `%in%` operator, which makes filtering values easier
+3. `readxl`
+  + `read_xlsx()`: Imports Microsoft Excel spreadsheet files in `.xlsx` format
+4. `writexl`
+  + `write_xlsx()`: Exports a data frame to a Microsoft Excel Spreadsheet in `xlsx.` format
+5. `tidystringdist`
+  + `tidy_stringdist()`: Generates similarity scores between two string values`
+
+
+
+
+# Description of the Dummy Data
+
+We assume that we are working on surveillance on a new infectious disease. There is one reference laboratory that conducts confirmatory testing for this infectious disease, and we define confirmed cases as those who test positive with the confirmatory test. We only test suspect cases, defined as those with symptoms relevant to this infectious disease, which means we expect that everyone who has been tested has a date of symptom onset, although we typically expect that this field is blank more often than not.
+
+We test suspect cases regularly, sometimes twice within a 24-hour window. We are interested in both the first positive test result and the first negative test result after that, as we define clinical recovery as the day that a case has received a negative test result. For simplicity, we deal with only positive or negative test results, although in practice we expect test results to are inconclusive/equivocal or samples collected to are invalid for testing.
+
+The reference laboratory has an information system, and everyday, the reference laboratory provides us with a **laboratory linelist** containing test results within the past 24 hours. The reference laboratory exports the file as a Microsoft Excel spreadsheet (`.xlsx`). Everyday, we process the laboratory linelist from the past 24 hours and all the cases since the beginning of the surveillance activity into the **case linelist**. We repeat this process everyday.
+
+* Each row in the **laboratory linelist** is a **laboratory result**, and a unique ID number of the laboratory result is automatically assigned by the reference laboratory information system using the variable `LabSpecimenID`.
+  + Additionally, there is another ID number `CaseID`, that the information system automatically generates whenever there is a new name in the system. If there is an *exact* match of an existing name in the system, the laboratory information system carries over the same `CaseID` to the new laboratory result. However, if the person has been tested before, but the name is not an exact match, the laboratory information system creates a new `CaseID` as if both laboratory results were from distinct individuals.
+  + This means that the `CaseID` variable does not *uniquely* identify the persons being tested, and we need to deduplicate these names manually later.
+* Each row in the **case linelist** is a **confirmed case**, and the unique `CaseID` number from the laboratory linelist is carried over to the case linelist. We used to process the case linelist in Microsoft Excel, so this is also a Microsoft Excel spreadsheet. Moving forward, we want to update this case linelist using R, but we still want the flexibility of being able to open this in Microsoft Excel, so we will export the processed case linelist in R to a Microsoft Excel Spreadsheet at the end.
+  + We process this case linelist daily to add new cases from the latest laboratory linelist, and update information of existing cases.
+  + As we manually deduplicate our data, we retain the lowest `CaseID` value.
+
+The variables in the laboratory linelist are as follows:
+
+* `LabSpecimenID`: Unique ID of laboratory result
+* `CaseID`: Laboratory information system's attempt to identify cases using exact match of names; manual deduplication required
+* `Name`: Name of the individual as encoded into the information system
+* `Age`: Calculated age based on date of birth encoded into the information system. For simplicity, we not show the date of birth variable, but it is ideal that ages are calculated from date of birth and not just reporting what the age was at the time of testing
+* `Sex`: Male or female (we assume this country only accepts two legal sexes)
+* `Municipality`: Municipality where the individual resides, as encoded into the information system
+* `DateSpecimenCollection`: Date when specimen was collected
+* `DateResultReleased`: Date when the result was released
+* `DateOnset`: Reported date of onset of symptoms relevant to the infectious disease
+* `Result`: Positive or negative
+
+When we conduct data processing, it is important that we set up clear **adjudication** or validation rules. Most of the time, the adjudication comes outside of data processing. For example, we may instruct the reporting health facility to reencode the laboratory result in the information system. We may also review other health records and replace values manually in the information system. If we need to make modifications during data processing, we must are clear about the **adjudication rules**. We work with a fairly simple set of rules to demonstrate this point.
+
+The variables in the case linelist, as well as the adjudication rules are as follows:
+
+* `CaseID`: This is the processed `CaseID` variable from the laboratory information system.
+  + We first conduct manual deduplication and tag groups of laboratory results that are considered under the same individual.
+  + After deduplicating, we retain the lowest `CaseID` number, e.g. between `11708` and `12890`, we retain `11708`.
+* The variables `Name`, `Age`, `Sex`, and `Municipality` are carried over from the laboratory linelist.
+  + If there are conflicts in the values on any of these variables, then we need to review other health records or recheck with the reporting health facility.
+  + In this example, we work with discrepancies in the `Name` value. The name with the most complete information is retained. For example, if one value has the middle name and the other does not, then the one with the middle name is retained.
+* The dates of specimen collection and result released are set up differently from the laboratory linelist. Specifically, in this case, we are primarily concerned with the first positive results (`DateSpecimenCollection_PositiveFirst` and `DateResultReleased_PositiveFirst`) and first negative result after that (`DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst`).
+    + This means that not all laboratory results from the same person are going to are used in this linelist of cases. There will be some loss of information.
+    + This means that we have to restructure the values from the `DateSpecimenCollection`, `DateResultReleased`, and `Result` from the laboratory linelist to fit the columns in the case linelist.
+* The date of symptom onset `DateOnset` is also carried over from the laboratory linelist, unless there are discrepancies with the values from a more recent laboratory result entry. 
+  + For this example, our rule is that we keep the earliest recorded date of symptom onset, e.g. if the original date of symptom onset recorded was July 1, 2021, but the latest laboratory result recorded it as July 3, 2021, then we keep July 1, 2021.
+  + We also check whether the date of symptom onset is on or before the date of specimen collection, as our hypothetical testing policy states that only symptomatic cases are going to are tested. If the date of symptom onset is after the date of specimen collection, then we replace the date of symptom onset with the date of specimen collection.
++ `DateReport`: This is the date when the case was added to the case linelist. We want to keep track of which cases were reported on which day, especially when we need to report the number of new cases to be reported for the day.
+
+<br>
+
+# Setting Up
+
+## Downloading the files
+
+We may download all the files in the [Github repository here](https://github.com/neljasonhaw/SurveillanceR). We click on the green button Code then click Download ZIP. While the files may usually are found in our Downloads folder, we may unzip it to a new folder anywhere else in our computer (say, our Documents folder) and give it a name. This new folder serve as our working directory, so remember where it is.
+
+Notice how the directory is organized into the following folders
+
+* `labs`: This is the folder where we store all the daily laboratory linelists. For this guide, we will work with `fakelablinelist_2021-07-16.xlsx`
+* `cases`: This is the folder where we store all the daily case linelists will be stored. For this guide, we will work with the case linelist `fakecaselinelist_2021-07-15.xlsx` and `fakelablinelist_2021-07-16.xlsx`. By the end of this guide we would have made `fakecaselinelist_2021-07-16.xlsx`.
+* `code`: This is the folder where we store our script files. Since we are processing laboratory results and cases daily with manual processing, it is recommended that we save a new script file every time we do our daily case processing. The R script file that contains all the codes in this is in `dataprocessing_2021-07-16.R`
+
+All of the other files are not relevant for the guide or are output files that are generated as part of the analysis.
+
+## Creating a new RStudio Project
+
+1. Open RStudio. On the menu bar, select `File` > `New Project...`
+2. The `New Project Wizard` dialog box opens. Select `Existing Directory`.
+3. Under `Project working directory`, select `Browse...` and locate the folder of the working directory.
+4. Select `Create Project`. At this point, we have created a new project file (.Rproj) as well as set the working directory.
+5. Create a new R script file using the keyboard shortcut `Ctrl-Shift-N` or going to `File` > `New File` > `R Script` or clicking on the `New File` button on the topmost left corner right below the menu bar then clicking `R Script`. The left side of the environment should split into two - with the script file found on the upper left side. The script file is similar to a do file for those who are familiar with Stata. Ideally, we should are saving all our code in a script file in case we need to redo or repeat analyses so that all we have to do is to run the script rather than coding everything from scratch again.
+6. Save the script file every now and then. Give it a name. In the repository, this is named `DataProcessing.R`. Open that script file if we just want to run the code.
+
+Alternatively, if we are familiar with setting up Git on RStudio, we may also set up the RStudio project by cloning the repository instead of downloading the ZIP file.
+
+## Loading packages
+
+We use the following packages. We make sure the packages are installed beforehand using the `install.packages()` function.
+
+Comments start with the hash key `#` and are helpful for us to make the code more understandable. We may choose to remove them and nothing will happen to the code, but it will make things harder for us to remember what we actually wrote as code.
+
+```{r loadpack, warning = FALSE, message = FALSE}
+####### LOADING PACKAGES ####### 
+# If using for the first time, use the following install.packages commands in comments
+# Internet connection required, only need to do this once ever
+# install.packages("tidyverse")
+# install.packages("readxl")
+# install.packages("writexl")
+# install.packages("tidystringdist")
+library(tidyverse)        # General data analysis package
+library(readxl)           # For reading Excel files
+library(writexl)          # For exporting to Excel
+library(tidystringdist)   # For fuzzy matching
+```
+
+## Importing dummy data
+
+We now import both linelists. We store the the laboratory linelist in a tibble called `lab_today`, while we store the case linelist in a tibble called `case_yday`. [Tibbles are data frames](https://r4ds.had.co.nz/tibbles.html) that make data manipulation using the `tidyverse` package a little easier. We will import using `readxl`'s `read_xlsx()`s function. Since the files are not in the same subfolder as the code, we would need to instruct R to go up one level, then locate the subfolder, then locate the file. Therefore, the syntax of the directory starts with a `"../"` to indicate the relative position of the subfolder.
+
+The name of the imported files may change everyday. For example, our file names may have dates so that we can remember what day the file was processed. If that is the case, we have to clearly specify what part of our codes will we need to update everyday, and which ones do not need to be changed. We will get creative with the hash key `#` to make this happpen. In our case, we can enclose the code in double rows of hash keys `###...` so that we can easily see which part of the codes we need to update daily. We do this so that we do not need to review the entire code everyday and save some time with our workflow.
+
+```{r loaddata, warning = FALSE, message = FALSE}
+###############################################################################
+###############################################################################
+### Anytime we enclose the code in a double row of hash keys, we are saying ###
+### that this part of the code must be updated every time the code is run.  ###
+###############################################################################
+###############################################################################
+
+###############################################################################
+###############################################################################
+
+####### IMPORTING THE DUMMY DATA ####### 
+
+#### Import dummy laboratory linelist
+lab_today <- read_xlsx("../labs/fakelablinelist_2021-07-16.xlsx")
+
+#### Import dummy case linelist
+case_yday <- read_xlsx("../cases/fakecaselinelist_2021-07-15.xlsx")
+
+##############################################################################
+##############################################################################
+```
+
+We take a peek of our data by displaying the first six rows using the `head()` function in base R.
+
+```{r peekdata, warning = FALSE, message = FALSE}
+####### INSPECTING OUR DATA ####### 
+
+#### Show first six rows
+head(lab_today)
+head(case_yday)
+```
+
+We may also view the full tibbles by using the `View()` function, i.e. `View(lab_today)` and `View(case_yday)` on the Console (by default, on the bottom right of RStudio). A new tab opens on the Script editor (by default, on the upper left of RStudio).
+
+The full laboratory linelist `lab_today` looks like this:
+
+```{r showdata1, echo = FALSE, warning = FALSE, message = FALSE}
+library(kableExtra)
+knitr::kable(lab_today, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+The full case linelist `case_today` looks like this
+
+```{r showdata2, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(case_yday, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+## Reading the dates correctly
+
+If we look at the data structure of both tibbles `lab_today` and `case_today` using the base R function `str()`, we notice the dates are read as a calendar date and time object (`POSIXct`). 
+
+```{r strdata, warning = FALSE, message = FALSE}
+#### Display the data structure
+str(lab_today)
+str(case_yday)
+```
+
+By default, Microsoft Excel reads dates as mm/dd/yyyy (for countries using mm/dd/yyyy format) but this is not a good date format. **By default, we should always use yyyy-mm-dd**, as it is always clear which one is the month and date. This date format is also the default in R, so when importing Excel spreadsheets, R tries to read mm/dd/yyyy as dates. In the event that there are variables that are not read as dates, we may use the `as.POSIXct()` function in base R. For syntax on the date formats, [check this link](https://www.r-bloggers.com/2013/08/date-formats-in-r/). For example:
+
+```{r sampledate, warning = FALSE, message = FALSE}
+# Sample vector of dates
+sampledate <- c("07/01/2021", "07/02/2021", "07/03/2021")
+str(sampledate)       # Read as string
+
+# Read as calendar date and time
+sampledate <- as.POSIXct(sampledate, format = "%m/%d/%Y")
+str(sampledate)       # Read as calendar date and time
+```
+
+## Overview of the data processing workflow
+
+Before we begin the actual data processing, we first outline the steps that we are taking.
+
+1. Process new cases from the laboratory linelist.+
+    a. Identify cases that have updates in the laboratory linelist.
+        i. Create a data frame of ID variable pairs - `LabSpecimenID` from the laboratory linelist and `CaseID` from the case linelist. Store results in the data frame `dedup_df`.
+        ii. Add names and other information from the tibble `lab_today` in aid of manual deduplication.
+            1) Store laboratory linelist information in the tibble `lab_today_info`.
+            2) Store case linelist information in the tibble `case_yday_info`.
+            3) Merge the tibble `lab_today_info` into the data frame `dedup_df`. Store results in the data frame `dedup_df_info`.
+            4) Merge the tibble `case_yday_info` into the data frame `dedup_df_info`.
+        iii. Generate similarity scores using Jaro-Winkler (`jw`) distance. Store results in the data frame `dedup_df_jw`.
+            1) Keep results with `jw` less than or equal to 0.3.
+        iv. Manually inspect results in the data frame `dedup_df_jw`.
+            1) Subset rows that are duplicates from case linelist. These are the rows that we check later on to update the date of existing cases. Store results in the data frame `dedup_df_jw_manual`.
+    b. Identify new cases within the laboratory linelist.
+        i. Filter positive results from laboratory linelist. Store in the tibble `lab_today_pos`.
+            1) Filter out duplicates already identified from the data frame `dedup_df_jw_manual` as those cases are not new cases. Store the results in the tibble `lab_today_pos_nodup`
+        ii. Create a data frame of ID variable pairs - `LabSpecimenID` from tibble `lab_today_pos_nodup`. Store results in the data frame `dedup_new_df`.
+        iii. Add names and other information from `lab_today_pos_nodup` in aid of manual deduplication and adjudication. Store results in the tibble `lab_today_pos_nodup_info`.
+            2) Merge the data frame `dedup_new_df` with the tibble `lab_today_pos_nodup_info`. Store results in the data frame `dedup_new_df_info`.
+            3) Merge the data frame `dedup_new_df_info` with the tibble `lab_today_pos_nodup_info`. We do this twice because we paired the `LabSpecimenID` of the tibble `lab_today_pos_nodup` by itself.
+        iii. Generate similarity scores using Jaro-Winkler (`jw`) distance. Store results in the data frame `dedup_new_df_jw`.
+            1) Keep results with `jw` less than or equal to 0.3.
+        iv. Manually inspect results in the data frame `dedup_df_new_jw`.
+            1) Subset rows that are duplicates of one another. These are the rows that we check later on to create a new case linelist. 
+            2) Manually tag a new ID variable to identify duplicate groups. Name the column `DuplicateID`. Store results in the data frame `dedup_df_new_jw_manual`.
+2. Save new case data.
+    a. Filter new cases from `lab_today_pos_nodup` with no duplication issues. Store results in the tibble `lab_today_pos_nodup_nodup` (we use `nodup` twice to indicate this has been deduplicated twice over).
+    b. Transform the tibble `lab_today_pos_nodup_nodup` into the columns of the tibble `case_yday` so that we may append these new cases to the case linelist later on. Store results in the tibble `case_today`.
+    c. **The tibble `case_today` contains all the new cases processed from the laboratory linelist.** So far, we have the new cases with no issues in deduplication. We will add the deduplicated new cases later on.
+3. Adjudicate on manually deduplicated data.
+    a. Complete compilation of new cases
+        i. Implement the adjudication rules on the tibble `dedup_new_df_jw_manual` and store the results in the tibble `case_today_dedup`.
+        ii. Add the rows of the tibble `case_today_dedup` into the tibble `case_today`. At this point, **we have completed the new cases for addition to the case linelist.**
+    b. Update data of current cases.
+        i. Retrieve the ID pairs from the tibble `dedup_df_jw_manual`. Store results in the tibble `dedup_df_jw_IDpairs`
+        ii. Merge the rest of the information from `lab_today` with `dedup_df_jw_IDpairs`. Store results in the tibble `dedup_df_jw_allinfo`
+        iii. Transform the tibble `dedup_df_jw_allinfo` into the columns of the tibble `case_yday`. Apply the adjudication rules. Store results in the tibble `case_today_newinfo`.
+        iv. Retrieve the rows from the tibble `case_yday` that need updating by filtering the `CaseID` values from the tibble `case_today_newinfo`. Store results in the tibble `case_today_oldinfo`.
+        v. Combine the rows from the tibbles `case_today_newinfo` and `case_today_oldinfo`. Store in a data frame `case_today_recon`. We want to compare the old data from `case_today_oldinfo` with the new data from `case_today_newinfo`.
+        vi. Apply the adjudication rules. Store results in the tibble `case_yday_update`. **The tibble `case_yday_update` contains all the old cases updated with data from the laboratory linelist.**
+3. Compile the latest case linelist.
+    a. From the tibble `case_yday`, filter out the `CaseID` values that are in `case_yday_update`. These are the cases that have no new updates. Store results in the tibble `case_yday_noupdate`. **The tibble `case_yday_noupdate` contains all the old cases with no new updates from the laboratory linelist.**
+    b. Combine the rows from the tibbles `case_today`, `case_yday_update`, and `case_yday_noupdate`. Store results in the tibble called `case_latest`. **The tibble `case_latest` contains the latest case linelist.**
+    c. Check date inconsistencies, e.g. date of symptom onset should not be after date of specimen collection of first positive test according to our hypothetical testing policy. Replace date of symptom onset with the date of specimen collection of first positive test if that is the case.
+    d. Export the `case_latest` linelist into Microsoft Excel spreadsheet format.
+    e. Tomorrow, the process repeats again and today's tibble `case_latest` becomes tomorrow's tibble `case_yday`.
+    
+A visual representation of the relationships of all the data frames generated by this workflow is presented below:
+
+```{r flowchart, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8}
+library(DiagrammeR)
+
+grViz(diagram = "digraph flowchart {
+  node [fontname = arial, shape = rectangle]
+  tab1 [label = '@@1']
+  tab2 [label = '@@2']
+  tab3 [label = '@@3']
+  tab4 [label = '@@4']
+  tab5 [label = '@@5']
+  tab6 [label = '@@6']
+  tab7 [label = '@@7']
+  tab8 [label = '@@8']
+  tab9 [label = '@@9']
+  tab10 [label = '@@10']
+  tab11 [label = '@@11']
+  tab12 [label = '@@12']
+  tab13 [label = '@@13']
+  tab14 [label = '@@14']
+  tab15 [label = '@@15']
+  tab16 [label = '@@16']
+  tab17 [label = '@@17']
+  tab18 [label = '@@18']
+  tab19 [label = '@@19']
+  tab20 [label = '@@20']
+  tab21 [label = '@@21']
+  tab22 [label = '@@22']
+  tab23 [label = '@@23']
+  tab24 [label = '@@24']
+  tab25 [label = '@@25']
+  tab26 [label = '@@26']
+  
+  tab1 -> tab3;
+  tab2 -> tab3;
+  tab1 -> tab4;
+  tab2 -> tab5;
+  tab3 -> tab6;
+  tab4 -> tab6;
+  tab5 -> tab6;
+  tab6 -> tab7;
+  tab7 -> tab8;
+  tab1 -> tab9;
+  tab8 -> tab10;
+  tab9 -> tab10;
+  tab10 -> tab11;
+  tab10 -> tab12;
+  tab11 -> tab13;
+  tab12 -> tab13;
+  tab13 -> tab14;
+  tab14 -> tab15;
+  tab10 -> tab16;
+  tab15 -> tab16;
+  tab16 -> tab17;
+  tab15 -> tab18;
+  tab18 -> tab17;
+  tab8 -> tab19;
+  tab1 -> tab20;
+  tab19 -> tab20;
+  tab20 -> tab21;
+  tab2 -> tab22;
+  tab21 -> tab22;
+  tab21 -> tab23;
+  tab22 -> tab23;
+  tab23 -> tab24;
+  tab2 -> tab25;
+  tab24 -> tab25;
+  tab25 -> tab26;
+  tab24 -> tab26;
+  tab17 -> tab26
+  
+}
+  
+  [1]: 'lab_today'
+  [2]: 'case_yday'    
+  [3]: 'dedup_df'   
+  [4]: 'lab_today_info'
+  [5]: 'case_yday_info'
+  [6]: 'dedup_df_info'
+  [7]: 'dedup_df_jw'
+  [8]: 'dedup_df_jw_manual'
+  [9]: 'lab_today_pos'
+  [10]: 'lab_today_pos_nodup'
+  [11]: 'dedup_new_df'
+  [12]: 'lab_today_pos_nodup_info'
+  [13]: 'dedup_new_df_info'
+  [14]: 'dedup_new_df_jw'
+  [15]: 'dedup_new_df_jw_manual'
+  [16]: 'lab_today_pos_nodup_nodup'
+  [17]: 'case_today'
+  [18]: 'case_today_dedup'
+  [19]: 'dedup_df_jw_IDpairs'
+  [20]: 'dedup_df_jw_allinfo'
+  [21]: 'case_today_newinfo'
+  [22]: 'case_today_oldinfo'
+  [23]: 'case_today_recon'
+  [24]: 'case_yday_update'
+  [25]: 'case_yday_noupdate'
+  [26]: 'case_latest'
+  ")
+
+
+```
+
+<br>
+
+# Processing New Cases from Laboratory Linelist
+
+We now deduplicate new cases from the lab linelist. We need to conduct two deduplication activities:
+
+* First, we need to check if any of the results from the laboratory linelist (`lab_today`) have already been added as cases in the case linelist (`case_yday`), and use these results to update the data of these cases.
+* Second, we need to deduplicate new cases within the laboratory linelist. There might be cases whose names appear twice in the laboratory linelist but are new cases that are not yet found on the case linelist.
+
+Because our hypothetical laboratory information system can only detect exact matches of names for the generation of the `CaseID`, we need to use fuzzy matching to manually deduplicate names.
+
+
+## Identifying cases that have updates in the laboratory linelist
+
+### Creating a data frame of ID variable pairs
+We create a tibble (`dedup_df`) that contains the column `LabSpecimenID` of the tibble `lab_today` paired with all `CaseID` values in the tibble `case_yday`. Recall that these ID variables uniquely identify each row. Therefore, the tibble `dedup_df` represents all pairs of IDs that are useful for deduplication. We use the base R function `expand.grid()` to generate a data frame of all ID pairs. It is important to note that if we decide to break a long function across several lines of code, R reads them as one function. We just have to make sure that all the parentheses are closed appropriately.
+
+```{r dedup_df, warning = FALSE, message = FALSE}
+#### Create a data frame of ID variable pairs
+# By default, expand.grid treats the string values as factors, 
+# so we have to instruct R not to do that
+dedup_df <- expand.grid(lab_today$LabSpecimenID, case_yday$CaseID, 
+                        stringsAsFactors = FALSE)
+# By default expand.grid saves the columns as V1 and V2. 
+# But that's not helpful at all. We can rename them using colnames()
+colnames(dedup_df) <- c("lab_today_id", "case_yday_id")
+```
+
+
+### Add names and other information in aid of manual deduplication
+We now add more information to the ID variables to aid us in decision making on whether or not the ID pairs are duplicates. In our laboratory linelist, `Name`, `Age`, `Sex`, and `Municipality` all help in making that decision. We also add the ID variables (`LabSpecimenID` and `CaseID`), `DateOnset` and `Result`.
+
+We first retrieve the relevant columns from `lab_today` and `case_yday` using `dplyr`'s `select()` function. We then store the results in the tibbles `lab_today_info` and `case_yday_info`. To make our code readable, we use `dplyr`'s pipe operator (`%>%`) instead of nesting parentheses.
+
+```{r dedup_df_info1, warning = FALSE, message = FALSE}
+#### Select columns in aid of manual deduplication
+# The pipe %>% operator makes code more readable. For example:
+# select(dataframe, columns) can be expressed as dataframe %>% select(columns)
+lab_today_info <- lab_today %>% 
+  select(LabSpecimenID, Name, Age, Sex, Municipality, DateOnset, Result)
+case_yday_info <- case_yday %>% 
+  select(CaseID, Name, Age, Sex, Municipality, DateOnset)
+```
+
+Then, we merge the data from the tibble `lab_today_info` into the data frame `dedup_df` and store into a new data frame called `dedup_df_info` using the base R function `merge()`. We also arrange the columns as we go along with the merging using `dplyr`'s `relocate()` function.
+
+```{r dedup_df_info2, warning = FALSE, message = FALSE}
+#### Merge dedup_df with info from lab_today_info
+# When merging, there are two data frames, labeled as x and y
+# by.x and by.y are the variable names with which to link the two data frames
+# In x, the ID is lab_today_id, in y, the ID is LabSpecimenID
+dedup_df_info <- merge(x = dedup_df, y = lab_today_info, 
+                       by.x = "lab_today_id", by.y = "LabSpecimenID")
+
+# We want to put the case_yday_id column at the end
+dedup_df_info <- dedup_df_info %>% relocate(case_yday_id, .after = last_col())
+```
+
+At this point, the data frame `dedup_df_info` has the relevant columns from the tibble `lab_today_info` merged with the column `lab_today_id` from the data frame `dedup_df`, and we have placed the column `case_yday_id` at the end. Now, we execute similar steps to merge the data from `case_yday_info`.
+
+```{r dedup_df_info3, warning = FALSE, message = FALSE}
+#### Merge with info from case_yday_info
+## NOTE that the x data frame is now dedup_df_info, NOT dedup_df
+# When merging, there are two data frames, labeled as x and y
+# by.x and by.y are the variable names with which to link the two data frames
+# In x, the ID is case_yday_id, in y, the ID is CaseID
+dedup_df_info <- merge(x = dedup_df_info, y = case_yday_info, 
+                       by.x = "case_yday_id", by.y = "CaseID")
+
+
+# The columns Name, Age, Sex, and Municipality appear in both x and y data frames
+# The command appends a suffix .x or .y to indicate which column came from which
+
+# We want to put the case_yday_id right before the Name.y column
+# Visually this remind us that lab_today_info are columns with suffix .x
+# and case_yday_info are columns with suffix .y
+dedup_df_info <- dedup_df_info %>% relocate(case_yday_id, .before = Name.y)
+```
+
+### Generating similarity scores
+We now run `tidystringdist`'s `tidy_stringdist()` function to generate similarity scores of all our pairwise names. We may read more about the different methods under this command by reading the documentation (Type `?tidy_stringdist-metrics` on the Console). If we do not specify the method, the command generates a score using all available methods (which can are time-consuming), so in this example, we just use one - the Jaro-Winkler distance (`jw`), which provides similarity scores on a scale of 0 to 1, where 0 is an exact match (the lower the score, the likelier it is a duplicate). We store the results in the data frame `dedup_df_jw` and retain pairs with a score of 0.3 and below for further inspection using `dplyr`'s `filter()` function, then sort by `jw` using `dplyr`'s `arrange()` function. Feel free to experiment with what method and cutoff works.
+
+```{r dedup_df_jw, warning = FALSE, message = FALSE}
+#### Generate similarity scores
+# Use Jaro-Winkler distance to generate similarity scores
+# v1 and v2 are the column of names
+dedup_df_jw <- tidy_stringdist(dedup_df_info, v1 = "Name.x", 
+                               v2 = "Name.y", method = "jw")
+
+# Filter jw <= 0.3
+dedup_df_jw <- dedup_df_jw %>% filter(jw <= 0.3)
+
+# Sort by jw
+dedup_df_jw <- dedup_df_jw %>% arrange(jw)
+```
+
+### Manually selecting duplicates
+Now with the data frame `dedup_df_jw`, we manually select rows that are duplicates by looking at the entire data frame. We type `View(dedup_df_jw)` on the Console to view it as a separate tab on the Script editor. Take note of the rows that we mark as duplicates.
+
+```{r showresult1, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(dedup_df_jw, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+In this example, all but Row 8 are duplicates. Penelope Fields is a 16 year old female from Mexe, while Penelope F. Fields is a 45 year old female who is also from Mexe. It is likely that these two are related which is why the names are similar, or the age (or date of birth) was encoded incorrectly. We would need to revalidate this information again **outside** of this data processing workflow, but let us assume in this case we have checked that they really are two different persons.
+
+Now we save the row numbers in a new tibble called `dedup_df_jw_manual` using the subset functions in base R. We can place a vector of row numbers inside the bracket beside a data frame, then followed by a comma with nothing else (to indicate we are selecting all columns).
+
+```{r dedup_save, warning = FALSE, message = FALSE}
+##############################################################################
+##############################################################################
+
+# Selecting duplicates - only Row 8 is not a duplicate
+# View(dedup_df_jw) to view the tibble
+dedup_df_jw_manual <- dedup_df_jw[c(1:7, 9:10),]
+
+##############################################################################
+##############################################################################
+```
+
+The tibble `dedup_df_jw_manual` now contains laboratory results of cases already existing in the case linelist, and we need to update their information later on with this tibble. The next step deduplicates names among new cases **within** the laboratory linelist.
+
+
+## Identifying new cases within the laboratory linelist
+
+### Filtering positive results
+We first filter only positive results from the laboratory linelist (`lab_today`) because these contain all the new cases and current cases with subsequent positive results. We save the filtered data in a tibble called `lab_today_pos`.
+
+```{r filter_positives, warning = FALSE, message = FALSE}
+#### Filter positive results only
+lab_today_pos <- lab_today %>% filter(Result == "Positive")
+```
+
+Then, we filter out the duplicates that we have identified from `dedup_df_jw_manual`. We use `dplyr`'s `filter()` function with the `%in%` operator. The `%in%` operator works like this: If the code is written as `X %in% Y`, then this means that we filter `X` based on the values in `Y`. In our case, `X` is the `LabSpecimenID` and `Y` is `dedup_df_jw_manual$lab_today_id`. Since we need the values that are **NOT** in `Y`, we need to enclose the entire expression with `!()` which gives us the opposite of what we need to filter. We save the filtered data in a tibble called `lab_today_pos_nodup`.
+
+```{r filter_positivies_nodup, warning = FALSE, message = FALSE}
+#### Filter out the duplicates identified from dedup_df_jw_manual
+# !() means we want the opposite result of the filter expression
+# X %in% Y means we want to filter X based on values in Y
+# We want to filter by laboratory result ID
+# X: LabSpecimenID in lab_today_pos, Y: dedup_df_jw_manual$lab_today_id
+lab_today_pos_nodup <- lab_today_pos %>% 
+  filter(!(LabSpecimenID %in% dedup_df_jw_manual$lab_today_id))
+```
+
+Taking a look at the resulting tibble (`View(lab_today_pos_nodup)`):
+
+```{r showresult2, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(lab_today_pos_nodup, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+This is the tibble that contains new cases, but have not yet been deduplicated. For example, rows 2 and 3, 4 and 5, and 6 and 7 are potentially duplicates. Notice how Penelope Fields is in this tibble because we have determined beforehand that the Penelope F. Fields in the case linelist is not the same Penelope Fields.
+
+### Creating a data frame of ID variable pairs
+We now create a tibble called `dedup_new_df` of `LabspecimenID` in the tibble `lab_today_pos_nodup` paired with all other `LabSpecimenID` in the same tibble. We use the `expand.grid()` function again. To save some space, we automatically delete the pairs that are equal to one another using the `filter()` function.
+
+```{r dedup_new_df, warning = FALSE, message = FALSE}
+#### Creating a data frame of ID variable pairs
+# Create a tibble that pairs all LabSpecimenID with themselves
+dedup_new_df <- expand.grid(lab_today_pos_nodup$LabSpecimenID, 
+                            lab_today_pos_nodup$LabSpecimenID,
+                            stringsAsFactors = FALSE)
+
+# Name columns
+colnames(dedup_new_df) <- c("LabSpecimenID1", "LabSpecimenID2")
+
+# Filter out values equal to one another
+dedup_new_df <- dedup_new_df %>% filter(!(LabSpecimenID1 == LabSpecimenID2))
+```
+
+### Add names and other information for deduplication and adjudication
+We now add more information to the names to aid us in decision making on whether or not the pairs are duplicates, and to decide which among the duplicates do we retain. We use `Age`, `Sex`, `Municipality`, `DateOnset`, `DateSpecimenCollection`, and     `DateResultReleased` to make that decision. We also add the `CaseID` variable. We store the filtered columns in the tibble `lab_today_pos_nodup_info`.
+
+```{r lab_today_pos_nodup_info, warning = FALSE, message = FALSE}
+#### Select columns in aid of manual deduplication
+lab_today_pos_nodup_info <- lab_today_pos_nodup %>% 
+  select(LabSpecimenID, CaseID, Name, Age, Sex, Municipality, 
+         DateOnset, DateSpecimenCollection, DateResultReleased)
+```
+
+Then we use those to merge back into `dedup_new_df` and save into a new data frame called `dedup_new_df_info`
+
+```{r dedup_new_df_info, warning = FALSE, message = FALSE}
+#### Merge twice
+# Merge with LabSpecimen1
+dedup_new_df_info <- merge(x = dedup_new_df, y = lab_today_pos_nodup_info,
+                           by.x = "LabSpecimenID1", by.y = "LabSpecimenID")
+
+# Merge with LabSpecimen2 - note that x is now dedup_new_df_info
+dedup_new_df_info <- merge(x = dedup_new_df_info, y = lab_today_pos_nodup_info,
+                           by.x = "LabSpecimenID2", by.y = "LabSpecimenID")
+
+# Relocate LabSpecimen2 before CaseID.y
+dedup_new_df_info <- dedup_new_df_info %>% 
+  relocate(LabSpecimenID2, .before = CaseID.y)
+```
+
+### Generate similarity scores
+We now run `tidystringdist`'s `tidy_stringdist()` function to generate similarity scores of all our pairwsise names. We use the `jw` method and retain scores 0.3 and below for further inspection. We store the results in a new data frame called `dedup_new_df_jw`. We also sort the results by `jw` and `Name.x` (the first name column) in aid of manual inspection.
+
+```{r dedup_new_df_jw, warning = FALSE, message = FALSE}
+#### Generate similarity scores
+# Use Jaro-Winkler distance to generate similarity scores
+# v1 and v2 are the column of names
+dedup_new_df_jw <- tidy_stringdist(dedup_new_df_info, v1 = "Name.x", 
+                                   v2 = "Name.y", method = "jw")
+
+# Filter jw <= 0.3
+dedup_new_df_jw <- dedup_new_df_jw %>% filter(jw <= 0.3)
+
+# Sort by jw and Name.x
+dedup_new_df_jw <- dedup_new_df_jw %>% arrange(jw, Name.x)
+```
+
+
+### Manually selecting duplicates
+Now with the data frame `dedup_new_df_jw`, we manually select rows that are duplicates by looking at the entire data frame. We type `View(dedup_new_df_jw)` on the Console to view it as a separate tab on the Script editor. Take note of the rows that we choose to retain.
+
+```{r showresult3, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(dedup_new_df_jw, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+There are no rows to exclude as all the rows are duplicates of one another. Rows 1 and 2, 3 and 4, and 5 and 6 are duplicates of one another. We save the results in a new data frame `dedup_new_df_jw_manual`. We add a new column called `DuplicateID` which manually tag rows as duplicates of one another.
+
+```{r dedup_new_df_jw_manual, warning = FALSE, message = FALSE}
+##############################################################################
+##############################################################################
+
+# No rows to exclude, so save everything
+dedup_new_df_jw_manual <- dedup_new_df_jw
+
+# Add a new column that manually tags the duplicates
+# Row 1 and 2 have DuplicateID 1
+# Row 3 and 4 have DuplicateID 2
+# Row 5 and 6 have DuplicateID 3
+dedup_new_df_jw_manual$DuplicateID <- c(1, 1, 2, 2, 3, 3)
+
+##############################################################################
+##############################################################################
+```
+
+<br> 
+
+# Saving New Case Data
+
+## Filtering new cases with no duplication issues
+Now we filter out the `LabSpecimenID` values from the tibble `lab_today_pos_nodup` that appear in `LabSpecimenID1` from the tibble `dedup_new_df_jw_manual`. We save the results in a new tibble `lab_today_pos_nodup_nodup` (`nodup` is used twice to indicate we have removed duplicates twice over).
+
+```{r cleanout_dup, warning = FALSE, message = FALSE}
+#### Filtering new cases with no duplication issues
+lab_today_pos_nodup_nodup <- lab_today_pos_nodup %>% 
+  filter(!(LabSpecimenID %in% dedup_new_df_jw_manual$LabSpecimenID1))
+```
+
+We see we have two cases:
+
+```{r showresult4, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(lab_today_pos_nodup_nodup, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+## Preparing to add to case linelist
+Now we transform the tibble `lab_today_pos_nodup_nodup` into the columns of the tibble `case_yday` so that we may append them later. We store the new tibble as `case_today`. Recall that:
+
+* We carry over the values of `CaseID`, `Name`, `Age`, `Sex`, `Municipality`, and `DateOnset`.
+* The values in `DateSpecimenCollection` and `DateResultReleased` are carried over to `DateSpecimenCollection_PositiveFirst` and `DateResultReleased_PositiveFirst`, respectively.
+* `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` are blank as these are new cases.
+* `DateReport` will be the date of the day, which in this case is July 16, 2021.
+
+Because the columns of `lab_today_pos_nodup_nodup` are mapped 1:1 to `case_yday`, we can first duplicate the tibble `lab_today_pos_nodup_nodup` as a new tibble called `case_today` and rename/remove/add blank columns from `case_today` to resemble `case_yday`. We rename columns using `dplyr`'s `rename()` function (syntax: `newname` = `oldname`). We remove columns using `dplyr`'s `select()` function and enclose the column names to delete using `-()`. We add blank date columns by simply creating them and assigning them `NA` values and declaring their class using `as.POSIXct()` for dates.
+
+```{r case_today, warning = FALSE, message = FALSE}
+#### Prepare case_today linelist
+# Duplicate lab_today_pos_nodup_nodup
+case_today <- lab_today_pos_nodup_nodup
+
+# Rename DateSpecimenCollection and DateResultReleased
+case_today <- case_today %>% 
+  rename(DateSpecimenCollection_PositiveFirst = DateSpecimenCollection,
+         DateResultReleased_PositiveFirst = DateResultReleased)
+
+# Remove the LabSpecimenID and Result columns
+case_today <- case_today %>% select(-c(LabSpecimenID, Result))
+
+# Add blank date columns
+case_today$DateSpecimenCollection_NegativeFirst <- as.POSIXct(NA)
+case_today$DateResultReleased_NegativeFirst <- as.POSIXct(NA)
+
+###############################################################################
+###############################################################################
+
+# Specify date today
+DateToday <- as.POSIXct("2021-07-16")
+
+###############################################################################
+###############################################################################
+
+# Add DateReport column
+case_today$DateReport <- DateToday
+
+# Move date onset before DateReport
+case_today <- case_today %>% relocate(DateOnset, .before = "DateReport")
+```
+
+The `case_today` linelist should look something like this:
+
+```{r showresult5, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(case_today, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+<br> 
+
+# Adjudicating on Data 
+
+## Compiling new cases
+
+Now we decide which information to use from each columns among the new cases in `dedup_new_df_jw_manual`. Recall the simple adjudication rules:
+
+* For `CaseID`, the lower number is kept.
+* For `Name`, the longer one is kept.
+* For `DateOnset`, the earlier one is kept.
+* For `DateSpecimenCollection`, the earlier one is kept for `DateSpecimenCollection_PositiveFirst`.
+* For `DateResultReleased`, the earlier one is kept for `DateResultReleased_PositiveFirst`.
+* `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` are both blank.
+
+Because we tagged the duplicates manually, we would have to select the values we need manually as well. There is no workaround for this, and it might are tempting to do this in Microsoft Excel. **DON'T.** Resist all temptation. The code ends up long, but the advantage is that we have a clear paper trail of what decisions we have made.
+
+We use `dplyr`'s `group_by()` function to tell R that we plan to adjudicate by `DuplicateID`. Then, we use the `dplyr`'s `summarize()` function to define our columns according to `case_today` as we append them later, as well as implement the adjudication rules. We use the base R functions `min()` and `max()` for the ones where we need to identify the minimum and maximum values. For `DateOnset`, we also have to specify that we have to exclude `NA` from deciding which is the minimum value. For `Name`, we use the base R function `which.max()` to identify the row number of the longest number of characters, and we use the base R function `nchar()` to calculate the number of characters. We then save our result in the tibble `case_today_dedup`:
+
+```{r case_today_dedup, warning = FALSE, message = FALSE}
+#### Apply adjudication rules
+# Use all the .x-suffixed columns
+# Adjudication rules
+# * For `CaseID`, the lower number is kept.
+# * For `Name`, the longer one is kept.
+# * For `DateOnset`, the earlier one is kept.
+# * For `DateSpecimenCollection`, the earlier one is kept for `DateSpecimenCollection_PositiveFirst`.
+# * For `DateResultReleased`, the earlier one is kept for `DateResultReleased_PositiveFirst`.
+# * `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` are both blank.
+case_today_dedup <- dedup_new_df_jw_manual %>% group_by(DuplicateID) %>% 
+  summarize(CaseID = min(CaseID.x),
+            Name = Name.x[which.max(nchar(Name.x))],
+            Age = min(Age.x),    # Doesn't matter in our hypothetical example, same value anyway
+            Sex = min(Sex.x),    # Doesn't matter in our hypothetical example, same value anyway
+            Municipality = min(Municipality.x), # Doesn't matter in our hypothetical example, same value anyway
+            DateSpecimenCollection_PositiveFirst = min(DateSpecimenCollection.x),
+            DateResultReleased_PositiveFirst = min(DateResultReleased.x),
+            DateSpecimenCollection_NegativeFirst = as.POSIXct(NA),
+            DateResultReleased_NegativeFirst = as.POSIXct(NA),
+            DateOnset = min(DateOnset.x[!is.na(DateOnset.x)]))
+
+# Add the DateReport variable
+case_today_dedup$DateReport <- DateToday
+
+# Finally, remove the DuplicateID as we do not need it anymore
+case_today_dedup <- case_today_dedup %>% select(-(DuplicateID))
+```
+
+Then, we append the cases from `case_today_dedup` into `case_today` and **we finally have a clean linelist of cases today** - deduplicated and adjudicated. We use the base R function `rbind()` to do this.
+
+```{r case_today_rbind, warning = FALSE, message = FALSE}
+#### Bind the rows together of case_today and case_today_dedup
+case_today <- rbind(case_today, case_today_dedup)
+```
+
+Our new case linelist `case_today` now looks like this:
+
+```{r showresult6, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(case_today, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+## Updating current cases
+
+### Retrieving ID pairs
+We first retrieve the `LabSpecimenID` and `CaseID` pairs from the data frame `dedup_df_jw_manual`. In that data frame, these correspond to the columns `lab_today_id` and `case_yday_id`. We store the ID pairs in a data frame called `dedup_df_jw_IDpairs`
+
+```{r dedup_df_jw_IDpairs, warning = FALSE, message = TRUE}
+#### Retrieve ID pairs
+dedup_df_jw_IDpairs <- dedup_df_jw_manual %>% select(lab_today_id, case_yday_id)
+```
+
+### Merging with the rest of the information
+Then, we retrieve all the columns we need from the tibble `lab_today` and merge them with the `lab_today_id` in the data frame `dedup_df_jw_IDpairs`. We store the results in a tibble called `dedup_df_jw_allinfo`
+
+```{r dedup_df_jw_allinfo, warning = FALSE, message = TRUE}
+#### Merge to retrieve all info
+# all.x = TRUE means to retain all rows of x regardless if there is a match,
+# all.y = FALSE means to drop rows of y if there is no match.
+dedup_df_jw_allinfo <- merge(x = dedup_df_jw_IDpairs, y = lab_today,
+                             by.x = "lab_today_id", by.y = "LabSpecimenID",
+                             all.x = TRUE, all.y = FALSE)
+```
+
+### Preparing to add to case linelist
+Now we transform the the data frame `dedup_df_jw_allinfo` into the columns of the tibble `case_yday` so that it are easier for us to update case information. We store the new tibble as `case_yday_newinfo`. 
+
+* We carry over the values of `CaseID`, `Name`, `Age`, `Sex`, `Municipality`, and `DateOnset`
+* The values in `DateSpecimenCollection` and `DateResultReleased` are assigned to `DateSpecimenCollection_PositiveFirst` and `DateResultReleased_PositiveFirst` if the result is positive, and `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` if the result is negative. We use the `dplyr`'s `mutate()` and `case_when()` functions for this. Note that the pipe operator (`%>%`) can are used to execute multiple instructions at once.
+* We then remove the columns `lab_today_id`, `CaseID`, `DateSpecimenCollection`, `DateResultReleased` and `Result` since we not need them anymore after this. `CaseID` in this data frame pertain to the autogenerated `CaseID` from the laboratory linelist. We need the column `case_yday_id` because that is the ID variable that allow us to link them to the tibble `case_yday`. then we rename `case_yday_id` to `CaseID`. 
+
+```{r case_yday_newinfo, warning = FALSE, message = FALSE}
+#### Prepare case_yday_newinfo linelist
+# Duplicate dedup_df_jw_allinfo
+case_yday_newinfo <- dedup_df_jw_allinfo
+
+# Keep the Name, Age, Sex, Municipality, and DateOnset columns as is
+# Note that case_yday_id contains the CaseID as it appears in the case linelist
+# CaseID here refers to the autogenerated CaseID from the laboratory linelist
+
+# Using mutate to assign columns of dates of specimen collection and dates of result released
+case_yday_newinfo <- case_yday_newinfo %>%
+  mutate(DateSpecimenCollection_PositiveFirst = 
+           case_when(Result == "Positive" ~ DateSpecimenCollection,
+                     NA ~ as.POSIXct(NA))) %>%
+  mutate(DateResultReleased_PositiveFirst =
+           case_when(Result == "Positive" ~ DateResultReleased,
+                     NA ~ as.POSIXct(NA))) %>%
+  mutate(DateSpecimenCollection_NegativeFirst = 
+           case_when(Result == "Negative" ~ DateSpecimenCollection,
+                     NA ~ as.POSIXct(NA))) %>%
+  mutate(DateResultReleased_NegativeFirst = 
+           case_when(Result == "Negative" ~ DateResultReleased,
+                     NA ~ as.POSIXct(NA)))
+
+# Remove extraneous columns
+case_yday_newinfo <- case_yday_newinfo %>% 
+  select(-c(CaseID, lab_today_id, DateSpecimenCollection, DateResultReleased, Result))
+
+# Rename case_yday_id to CaseID
+case_yday_newinfo <- case_yday_newinfo %>% rename(CaseID = case_yday_id)
+
+# Add DateReport
+case_yday_newinfo$DateReport <- DateToday
+
+# Relocate DateOnset before DateReport
+case_yday_newinfo <- case_yday_newinfo %>% relocate(DateOnset, .before = "DateReport")
+```
+
+The tibble should now look like this:
+
+```{r showresult7, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(case_yday_newinfo, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+### Add the information from the case linelist for comparison
+Now, we add rows to the tibble `case_yday_newinfo` that contain information from the case linelist. We save these results in a tibble called `case_yday_oldinfo`. We then combine the two tibbles into a new tibble called `case_yday_recon`. In this tibble, we implement the adjudication rules and save them in a new tibble called `case_yday_update`
+
+* For `Name`, the longer one is kept.
+* For all date columns, the earliest one is kept.
+
+```{r case_yday_recon, warning = FALSE, message = FALSE}
+#### Prepare case_yday_oldinfo linelist and adjudicate on data
+# Retrieve the old case information
+case_yday_oldinfo <- case_yday %>% filter(CaseID %in% case_yday_newinfo$CaseID)
+
+# Combine rows and arrange by CaseID
+case_yday_recon <- rbind(case_yday_oldinfo, case_yday_newinfo)
+case_yday_recon <- case_yday_recon %>% arrange(CaseID)
+
+# Adjudication rules
+# * For `Name`, the longer one is kept.
+# * For all date columns, the earliest one is kept
+case_yday_update <- case_yday_recon %>% group_by(CaseID) %>% 
+  summarize(Name = Name[which.max(nchar(Name))],
+            Age = min(Age),    # Doesn't matter in our hypothetical example, same value anyway
+            Sex = min(Sex),    # Doesn't matter in our hypothetical example, same value anyway
+            Municipality = min(Municipality), # Doesn't matter in our hypothetical example, same value anyway
+            DateSpecimenCollection_PositiveFirst =
+              min(DateSpecimenCollection_PositiveFirst[!is.na(DateSpecimenCollection_PositiveFirst)]),
+            DateResultReleased_PositiveFirst = 
+              min(DateResultReleased_PositiveFirst[!is.na(DateResultReleased_PositiveFirst)]),
+            DateSpecimenCollection_NegativeFirst =
+              min(DateSpecimenCollection_NegativeFirst[!is.na(DateSpecimenCollection_NegativeFirst)]),
+            DateResultReleased_NegativeFirst = 
+              min(DateResultReleased_NegativeFirst[!is.na(DateResultReleased_NegativeFirst)]),
+            DateOnset = min(DateOnset[!is.na(DateOnset)]),
+            DateReport = min(DateReport[!is.na(DateReport)]))
+```
+
+The tibble `case_yday_update` should now look like this:
+
+```{r showresult8, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(case_yday_update, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+<br>
+
+# Compiling the latest case linelist
+
+## Putting the processed tibbles altogether
+
+At this point, we have a linelist of processed new cases called `case_today`, and a linelist of current cases with updated information called `case_yday_update`. To compile the full latest case linelist, we need one more linelist: current cases with no updates. We filter out `CaseID` values from the tibble `case_yday` that are not in `case_yday_update`. We save this linelist as a new tibble `case_yday_noupdate`
+
+```{r case_yday_noupdate, warning = FALSE, message = FALSE}
+#### Retrieve cases with no update
+case_yday_noupdate <- case_yday %>% filter(!(CaseID %in% case_yday_update$CaseID))
+```
+
+Finally, we can combine the three tibbles `case_today`, `case_yday_update`, and `case_yday_noupdate` into the latest case linelist. We can save this in a tibble called `case_latest`
+
+```{r case_latest, warning = FALSE, message = FALSE}
+#### Combine the three tibbles to the full latest case linelist, and arrange by CaseID
+case_latest <- rbind(case_today, case_yday_update, case_yday_noupdate)
+case_latest <- case_latest %>% arrange(CaseID)
+```
+
+The latest case linelist now looks like this:
+
+```{r showresult9, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(case_latest, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+## Checking date consistencies
+
+Finally, we check whether the date of symptom onset is on or before the date of specimen collection of the first positive test result. We mentioned earlier that when we find dates of symptom onset that are greater than the date of specimen collection, we replace the date of symptom onset with the date of specimen collection.
+
+```{r cleandateonset, warning = FALSE, message = TRUE}
+#### Correct for date inconsistencies
+case_latest <- case_latest %>%
+  mutate(DateOnset = 
+           case_when(DateOnset <= DateSpecimenCollection_PositiveFirst ~ DateOnset,
+                     DateOnset > DateSpecimenCollection_PositiveFirst ~ DateSpecimenCollection_PositiveFirst,
+                     NA ~ as.POSIXct(NA)))
+```
+
+```{r showresult10, echo = FALSE, warning = FALSE, message = FALSE}
+knitr::kable(case_latest, row.names = TRUE) %>% kable_styling(font_size = 12)
+```
+
+## Export to Micrsoft Excel
+
+If we want to export our tibble `case_latest` to a Microsoft Excel spreadsheet for archiving, we use `writexl`'s `write_xlsx()` function. We will name our file to today's case linelist, which in this case is `fakecaselinelist_2021-07-16.xlsx`. This file is what we will use as `case_yday` for tomorrow's processing.
+
+```{r exportxlsx, warning = FALSE, message = FALSE}
+##############################################################################
+##############################################################################
+
+# Export to Excel
+write_xlsx(case_today, "../cases/fakecaselinelist_2021-07-16.xlsx")
+
+##############################################################################
+##############################################################################
+```
+
+<br>
+
+Congratulations on getting to the end! The entire process may be challenging, but the beauty of this approach is that after the script file has been setup, we only need to modify the codes that require manual processing (the one in double rows of hash keys `#`), so the efficiency gains with a data processing workflow in R pays off quickly when we have to process surveillance data on a daily basis.
+
+<br>
+
+**Comments welcome on Twitter: [\@jasonhaw_](https://www.twitter.com/jasonhaw_)**
