@@ -120,6 +120,7 @@ In this guide, we will learn to use the following functions:
   + `case_when()`: Vectorizes if/else statements. For those familiar with SQL, this is similar to the `CASE WHEN` statement.
   + `filter()`: Filters rows based on certain conditions
   + `group_by()`: Groups rows based on a values of the specified variable
+  + `mutate()`: Creates new columns
   + `relocate()`: Arranges columns in a data frame
   + `rename()`: Renames column names (syntax: `newname` = `oldname`)
   + `select()`: Selects columns in a data frame
@@ -944,7 +945,7 @@ knitr::kable(case_yday_update, row.names = TRUE) %>% kable_styling(font_size = 1
 ```
 <br>
 
-# Compiling the latest case linelist
+# Compiling the Latest Case Linelist
 
 ## Putting the processed tibbles altogether
 
