@@ -264,6 +264,7 @@ case_today <- case_today %>% relocate(DateOnset, .before = "DateReport")
 # * For `DateSpecimenCollection`, the earlier one is kept for `DateSpecimenCollection_PositiveFirst`.
 # * For `DateResultReleased`, the earlier one is kept for `DateResultReleased_PositiveFirst`.
 # * `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` are both blank.
+# * `DateReport` is the date today.
 case_today_dedup <- dedup_new_df_jw_manual %>% group_by(DuplicateID) %>% 
   summarize(CaseID = min(CaseID.x),
             Name = Name.x[which.max(nchar(Name.x))],
@@ -274,10 +275,8 @@ case_today_dedup <- dedup_new_df_jw_manual %>% group_by(DuplicateID) %>%
             DateResultReleased_PositiveFirst = min(DateResultReleased.x),
             DateSpecimenCollection_NegativeFirst = as.POSIXct(NA),
             DateResultReleased_NegativeFirst = as.POSIXct(NA),
-            DateOnset = min(DateOnset.x[!is.na(DateOnset.x)]))
-
-# Add the DateReport variable
-case_today_dedup$DateReport <- DateToday
+            DateOnset = min(DateOnset.x[!is.na(DateOnset.x)]),
+            DateReport = DateToday)
 
 # Finally, remove the DuplicateID as we do not need it anymore
 case_today_dedup <- case_today_dedup %>% select(-(DuplicateID))
@@ -389,7 +388,7 @@ case_latest <- case_latest %>%
 ##############################################################################
 
 # Export to Excel
-write_xlsx(case_today, "../SurveillanceR/cases/fakecaselinelist_2021-07-16.xlsx")
+write_xlsx(case_latest, "../SurveillanceR/cases/fakecaselinelist_2021-07-16.xlsx")
 
 ##############################################################################
 ##############################################################################

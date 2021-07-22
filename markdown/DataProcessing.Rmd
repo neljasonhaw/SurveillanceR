@@ -1,7 +1,7 @@
 ---
 title: "Epidemiologic Surveillance Data Processing"
 author: "Created by Nel Jason Haw"
-date: "Last updated July 16, 2021"
+date: "Last updated July 22, 2021"
 output:
   rmdformats::robobook:
       number_sections: yes
@@ -783,6 +783,7 @@ Now we decide which information to use from each columns among the new cases in 
 * For `DateSpecimenCollection`, the earlier one is kept for `DateSpecimenCollection_PositiveFirst`.
 * For `DateResultReleased`, the earlier one is kept for `DateResultReleased_PositiveFirst`.
 * `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` are both blank.
+* `DateReport` is the date for the day.
 
 Because we tagged the duplicates manually, we would have to select the values we need manually as well. There is no workaround for this, and it might are tempting to do this in Microsoft Excel. **DON'T.** Resist all temptation. The code ends up long, but the advantage is that we have a clear paper trail of what decisions we have made.
 
@@ -798,6 +799,7 @@ We use `dplyr`'s `group_by()` function to tell R that we plan to adjudicate by `
 # * For `DateSpecimenCollection`, the earlier one is kept for `DateSpecimenCollection_PositiveFirst`.
 # * For `DateResultReleased`, the earlier one is kept for `DateResultReleased_PositiveFirst`.
 # * `DateSpecimenCollection_NegativeFirst` and `DateResultReleased_NegativeFirst` are both blank.
+# * `DateReport` is the date today.
 case_today_dedup <- dedup_new_df_jw_manual %>% group_by(DuplicateID) %>% 
   summarize(CaseID = min(CaseID.x),
             Name = Name.x[which.max(nchar(Name.x))],
@@ -808,10 +810,8 @@ case_today_dedup <- dedup_new_df_jw_manual %>% group_by(DuplicateID) %>%
             DateResultReleased_PositiveFirst = min(DateResultReleased.x),
             DateSpecimenCollection_NegativeFirst = as.POSIXct(NA),
             DateResultReleased_NegativeFirst = as.POSIXct(NA),
-            DateOnset = min(DateOnset.x[!is.na(DateOnset.x)]))
-
-# Add the DateReport variable
-case_today_dedup$DateReport <- DateToday
+            DateOnset = min(DateOnset.x[!is.na(DateOnset.x)]),
+            DateReport = DateToday)
 
 # Finally, remove the DuplicateID as we do not need it anymore
 case_today_dedup <- case_today_dedup %>% select(-(DuplicateID))
@@ -904,7 +904,7 @@ knitr::kable(case_yday_newinfo, row.names = TRUE) %>% kable_styling(font_size = 
 ```
 
 ### Add the information from the case linelist for comparison
-Now, we add rows to the tibble `case_yday_newinfo` that contain information from the case linelist. We save these results in a tibble called `case_yday_oldinfo`. We then combine the two tibbles into a new tibble called `case_yday_recon`. In this tibble, we implement the adjudication rules and save them in a new tibble called `case_yday_update`
+Now, we add rows to the tibble `case_yday_newinfo` that contain information from the case linelist. We save these results in a tibble called `case_yday_oldinfo`. We then combine the two tibbles into a new tibble called `case_yday_recon`. In this tibble, we implement the adjudication rules and save them in a new tibble called `case_yday_update`.
 
 * For `Name`, the longer one is kept.
 * For all date columns, the earliest one is kept.
@@ -996,13 +996,19 @@ If we want to export our tibble `case_latest` to a Microsoft Excel spreadsheet f
 ##############################################################################
 
 # Export to Excel
-write_xlsx(case_today, "../cases/fakecaselinelist_2021-07-16.xlsx")
+write_xlsx(case_latest, "../cases/fakecaselinelist_2021-07-16.xlsx")
 
 ##############################################################################
 ##############################################################################
 ```
 
 <br>
+
+# Helpful Tips when Debugging Code
+
+1. R is case-sensitive, so always proofread when debugging code.
+2. Pay special attention to the location of the commas, the parentheses, and the brackets.
+3. A "hard reset" I always use is typing `rm(list = ls())`, which removes everything in the environment, and run the script from scratch again. This is helpful when I do not know exactly the error when debugging code.
 
 Congratulations on getting to the end! The entire process may be challenging, but the beauty of this approach is that after the script file has been setup, we only need to modify the codes that require manual processing (the one in double rows of hash keys `#`), so the efficiency gains with a data processing workflow in R pays off quickly when we have to process surveillance data on a daily basis.
 
